@@ -49,7 +49,7 @@ class SimAgent:
         self.llm = llm_client
         self.logger = logging.getLogger(f"Agentia.Agent.{self.name}")
         
-        self.inventory: List[str] = []
+        # self.inventory removed - stateless design
         self.status: Dict[str, Any] = {"fatigue": "low", "stress": "low"}
 
     def get_system_prompt(self, tick_duration: int) -> str:
@@ -72,12 +72,14 @@ class SimAgent:
         system_prompt = self.get_system_prompt(TICK_DURATION_MINUTES)
         
         # Prepare context variables
-        inventory_str = ', '.join(self.inventory) if self.inventory else 'Empty'
+        # inventory is now passed in world_context
+        # DEBUG: Log the inventory seen by the agent
+        inventory_context = world_context.get('inventory', 'Not Found')
+        self.logger.info(f"{self.name} Context Inventory: {inventory_context}")
         
         # Build user message using template
         new_user_message = AGENT_USER_TEMPLATE.format(
             tick=current_tick,
-            inventory=inventory_str,
             status=self.status,
             **world_context
         )

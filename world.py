@@ -111,6 +111,14 @@ class World:
              return self.locations[location_id].connected_to
          return []
 
+    def get_agent_inventory(self, agent_name: str) -> List[str]:
+        """Get list of object names held by an agent."""
+        inventory = []
+        for obj in self.objects.values():
+            if obj.location_id == agent_name:
+                inventory.append(f"{obj.name} (id: {obj.id})")
+        return inventory
+
     def create_object(self, object_id: str, name: str, location_id: str, 
                      state: str = "normal", description: str = "", 
                      properties: List[str] = None) -> bool:
@@ -273,10 +281,14 @@ class World:
         if pending_events:
             data["events"] = "\n".join([f"- {event}" for event in pending_events])
             
+        # Agent Inventory
+        inventory_items = self.get_agent_inventory(agent_name)
+        data["inventory"] = ", ".join(inventory_items) if inventory_items else "Empty"
+            
         return data
 
 
-    def process_action(self, agent_name: str, decision: Dict[str, Any], inventory: List[str] = None) -> Dict[str, Any]:
+    def process_action(self, agent_name: str, decision: Dict[str, Any]) -> Dict[str, Any]:
         """
         Executes an agent's decision against the world state.
         Returns a result dictionary with success status and message.
@@ -325,6 +337,10 @@ class World:
                     action_desc = content or ""
                     loc = self.get_location(current_location_id)
                     witnesses = loc.agents_present if loc else []
+                    
+                    # Fetch inventory internally for EnvAgent
+                    current_inventory = self.get_agent_inventory(agent_name)
+                    
                     result = self.env_agent.resolve_interaction(
                         agent_name=agent_name,
                         target_object=obj,
@@ -332,7 +348,7 @@ class World:
                         location=loc,
                         witnesses=witnesses,
                         world=self,
-                        inventory=inventory
+                        inventory=current_inventory
                     )
                 else:
                     result["message"] = f"Object '{target}' not found."

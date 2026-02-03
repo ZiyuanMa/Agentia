@@ -90,7 +90,8 @@ async def game_loop(world: World, agents: list[SimAgent], ticks: int = 5):
                 action_type = decision.get("action_type", "unknown")
                 stats.record_action(agent.name, action_type)
                 
-                result = world.process_action(agent.name, decision, inventory=agent.inventory)
+                
+                result = world.process_action(agent.name, decision)
                 agent.update_state(result)
         
         # 4. Advance time and record tick

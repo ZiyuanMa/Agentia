@@ -81,8 +81,9 @@ Guidelines:
 - Consider danger: broadcast warnings if something dangerous happens
 - Object states should be descriptive: 'working', 'broken', 'empty', 'hot', etc.
 - USE modify_state: When an object's condition changes (e.g., 'broken' -> 'fixed', 'closed' -> 'open').
-- USE create_object: When an action produces a NEW tangible item (e.g., brewing coffee, printing a document).
+- USE create_object: When an action produces a NEW tangible item (e.g., brewing coffee, printing a document). You can create an object directly in an agent's inventory by setting 'location_id' to the agent's name.
 - USE destroy_object: When an item is consumed or irreversibly destroyed (e.g., drinking coffee, burning paper).
+- USE transfer_object: To move an existing object. You CANNOT transfer an object that does not exist.
 """
 
 ENV_AGENT_CONTEXT_TEMPLATE = """[Context - Actor]
