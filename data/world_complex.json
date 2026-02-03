@@ -1,0 +1,201 @@
+{
+    "locations": [
+        {
+            "id": "lobby",
+            "name": "Corporate Lobby",
+            "description": "A cold, expansive lobby with high ceilings. Scanning gates block the path forward.",
+            "connected_to": [
+                "corridor_east",
+                "corridor_west",
+                "outside"
+            ],
+            "objects": [
+                "reception_desk",
+                "security_gate",
+                "visitor_log"
+            ]
+        },
+        {
+            "id": "outside",
+            "name": "Parking Lot",
+            "description": "A concrete parking lot under the hot sun.",
+            "connected_to": [
+                "lobby"
+            ],
+            "objects": [
+                "dumpster"
+            ]
+        },
+        {
+            "id": "corridor_east",
+            "name": "East Wing Corridor",
+            "description": "A long hallway leading to administrative areas.",
+            "connected_to": [
+                "lobby",
+                "manager_office",
+                "storage_room"
+            ],
+            "objects": [
+                "potted_plant",
+                "fire_extinguisher"
+            ]
+        },
+        {
+            "id": "corridor_west",
+            "name": "West Wing Corridor",
+            "description": "A hallway humming with the sound of machinery.",
+            "connected_to": [
+                "lobby",
+                "server_room",
+                "kitchen"
+            ],
+            "objects": [
+                "bulletin_board"
+            ]
+        },
+        {
+            "id": "storage_room",
+            "name": "Storage Closet",
+            "description": "A cramped room filled with boxes and cleaning supplies.",
+            "connected_to": [
+                "corridor_east"
+            ],
+            "objects": [
+                "shelf_supplies",
+                "mop_bucket",
+                "toolbox"
+            ]
+        },
+        {
+            "id": "manager_office",
+            "name": "Director's Office",
+            "description": "An opulent office with mahogany furniture. The desk is cluttered.",
+            "connected_to": [
+                "corridor_east"
+            ],
+            "objects": [
+                "director_desk",
+                "safe",
+                "painting"
+            ]
+        },
+        {
+            "id": "server_room",
+            "name": "Mainframe Chamber",
+            "description": "Freezing cold room. The central mainframe is emitting an ominous red glow.",
+            "connected_to": [
+                "corridor_west"
+            ],
+            "objects": [
+                "mainframe_core",
+                "biometric_scanner",
+                "cooling_system"
+            ]
+        },
+        {
+            "id": "kitchen",
+            "name": "Staff Kitchen",
+            "description": "Untidy kitchen. The sink is full of dishes.",
+            "connected_to": [
+                "corridor_west"
+            ],
+            "objects": [
+                "coffee_machine",
+                "fridge",
+                "cupboard"
+            ]
+        }
+    ],
+    "objects": [
+        {
+            "id": "mainframe_core",
+            "name": "Mainframe Core",
+            "location": "server_room",
+            "state": "critical_overheat",
+            "description": "The system is unstable. Logic circuits are melting.",
+            "properties": [
+                "interactive",
+                "electronic",
+                "complex"
+            ]
+        },
+        {
+            "id": "toolbox",
+            "name": "Red Toolbox",
+            "location": "storage_room",
+            "state": "closed",
+            "description": "A heavy toolbox. Might contain wrenches or screwdrivers.",
+            "properties": [
+                "interactive",
+                "container",
+                "portable"
+            ]
+        },
+        {
+            "id": "safe",
+            "name": "Wall Safe",
+            "location": "manager_office",
+            "state": "locked",
+            "description": "A digital safe requiring a 4-digit code.",
+            "properties": [
+                "interactive",
+                "secure"
+            ]
+        },
+        {
+            "id": "director_desk",
+            "name": "Director's Desk",
+            "location": "manager_office",
+            "state": "cluttered",
+            "description": "Covered in papers. A sticky note is stuck to the monitor.",
+            "properties": [
+                "interactive",
+                "searchable"
+            ]
+        },
+        {
+            "id": "coffee_machine",
+            "name": "Espresso Master 3000",
+            "location": "kitchen",
+            "state": "out_of_water",
+            "description": "High-end machine. Blinking 'REFILL WATER' light.",
+            "properties": [
+                "interactive",
+                "electric"
+            ]
+        },
+        {
+            "id": "cupboard",
+            "name": "Kitchen Cupboard",
+            "location": "kitchen",
+            "state": "closed",
+            "description": "Wooden cupboards above the counter.",
+            "properties": [
+                "interactive",
+                "container"
+            ]
+        },
+        {
+            "id": "cooling_system",
+            "name": "HVAC Control Panel",
+            "location": "server_room",
+            "state": "malfunction",
+            "description": "The manual override lever is stuck.",
+            "properties": [
+                "interactive",
+                "mechanical"
+            ]
+        },
+        {
+            "id": "fire_extinguisher",
+            "name": "Fire Extinguisher",
+            "location": "corridor_east",
+            "state": "full",
+            "description": "Standard safety equipment.",
+            "properties": [
+                "interactive",
+                "portable"
+            ]
+        }
+    ]
+}
