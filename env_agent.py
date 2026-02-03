@@ -43,7 +43,8 @@ class EnvironmentAgent:
     
     def resolve_interaction(self, agent_name: str, target_object: 'WorldObject',
                            action_description: str, location: 'Location',
-                           witnesses: List[str], world: 'World') -> Dict[str, Any]:
+                           witnesses: List[str], world: 'World',
+                           inventory: List[str] = None) -> Dict[str, Any]:
         """
         Call LLM to determine the outcome of a complex interaction.
         Returns a result dict with success, message, and optionally triggers world effects.
@@ -52,7 +53,7 @@ class EnvironmentAgent:
         
         # Build context prompt
         context = self._build_context(agent_name, target_object, action_description, 
-                                      location, witnesses)
+                                      location, witnesses, inventory)
         
         messages = [
             {"role": "system", "content": ENV_AGENT_SYSTEM_PROMPT},
@@ -143,11 +144,12 @@ class EnvironmentAgent:
         return result
     
     def _build_context(self, agent_name: str, target_object: 'WorldObject',
-                      action_description: str, location: 'Location',
-                      witnesses: List[str]) -> str:
+                       action_description: str, location: 'Location',
+                       witnesses: List[str], inventory: List[str] = None) -> str:
         """Build the context prompt for the EnvAgent."""
         return ENV_AGENT_CONTEXT_TEMPLATE.format(
             agent_name=agent_name,
+            inventory=str(inventory) if inventory else "[]",
             object_name=target_object.name,
             object_id=target_object.id,
             object_state=target_object.state,

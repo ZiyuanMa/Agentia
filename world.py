@@ -276,7 +276,7 @@ class World:
         return data
 
 
-    def process_action(self, agent_name: str, decision: Dict[str, Any]) -> Dict[str, Any]:
+    def process_action(self, agent_name: str, decision: Dict[str, Any], inventory: List[str] = None) -> Dict[str, Any]:
         """
         Executes an agent's decision against the world state.
         Returns a result dictionary with success status and message.
@@ -331,7 +331,8 @@ class World:
                         action_description=action_desc,
                         location=loc,
                         witnesses=witnesses,
-                        world=self
+                        world=self,
+                        inventory=inventory
                     )
                 else:
                     result["message"] = f"Object '{target}' not found."

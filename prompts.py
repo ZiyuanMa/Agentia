@@ -69,11 +69,13 @@ Output Format:
 
 Your job is to:
 1. Analyze the action's feasibility given the actor's state and equipment
-2. Determine the outcome (success/failure/partial)
-3. Describe what happened narratively in the "message" field
-4. If needed, add effects to change the world state
+2. Check the agent's inventory for necessary tools or materials
+3. Determine the outcome (success/failure/partial)
+4. Describe what happened narratively in the "message" field
+5. If needed, add effects to change the world state
 
 Guidelines:
+- Check for required items (e.g., keys, tools) in the inventory before allowing an action.
 - Be realistic: untrained people can't fix complex machinery
 - Consider time: repairs take time, use lock_agent effect for long actions
 - Consider danger: broadcast warnings if something dangerous happens
@@ -85,6 +87,7 @@ Guidelines:
 
 ENV_AGENT_CONTEXT_TEMPLATE = """[Context - Actor]
 Name: {agent_name}
+Inventory: {inventory}
 
 [Context - Target Object]
 Object: {object_name} (ID: {object_id})
