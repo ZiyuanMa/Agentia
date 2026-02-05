@@ -21,7 +21,8 @@ def make_world_context(**kwargs) -> dict:
         "people": "No one else",
         "objects": "None",
         "connections": "['hallway']",
-        "events": "None"
+        "events": "None",
+        "inventory": "Empty"
     }
     defaults.update(kwargs)
     return defaults
@@ -108,7 +109,6 @@ class TestSimAgent:
         assert agent.age == 30
         assert agent.occupation == "Tester"
         assert agent.current_goal == "Test the system"
-        assert agent.inventory == []
         assert agent.background == "Created in a lab environment in 2025. No prior work history."
         assert agent.status["fatigue"] == "low"
 

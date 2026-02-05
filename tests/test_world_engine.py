@@ -293,14 +293,14 @@ class TestToolValidation:
 #        assert obj.properties == []  # Default factory - properties might be gone from schema usage?
 
     def test_valid_transfer_object(self):
-        """Test TransferObjectAction with optional fields."""
+        """Test TransferObjectAction with correct fields."""
         transfer = TransferObjectAction(
             object_id="item",
-            from_location="room_a",
-            to_agent="Alice"
+            from_id="room_a",
+            to_id="Alice"
         )
-        assert transfer.to_location is None
-        assert transfer.from_agent is None
+        assert transfer.from_id == "room_a"
+        assert transfer.to_id == "Alice"
 
 
 if __name__ == "__main__":

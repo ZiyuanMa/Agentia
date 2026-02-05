@@ -46,8 +46,7 @@ class TestWorldObjectOperations:
             name="New Object",
             location_id="room_a",
             state="fresh",
-            description="A newly created object",
-            properties=["consumable"]
+            description="A newly created object"
         )
         
         assert success is True
@@ -56,7 +55,6 @@ class TestWorldObjectOperations:
         assert obj.name == "New Object"
         assert obj.state == "fresh"
         assert obj.location_id == "room_a"
-        assert "consumable" in obj.properties
 
     def test_create_duplicate_object_fails(self, world):
         """Test that creating an object with existing ID fails."""
@@ -88,8 +86,8 @@ class TestWorldObjectOperations:
         
         success = world.transfer_object(
             object_id="test_object",
-            from_location="room_a",
-            to_location="room_b"
+            from_id="room_a",
+            to_id="room_b"
         )
         
         assert success is True
@@ -160,7 +158,7 @@ class TestDeferredEffects:
         """Test deferred ModifyObjectState."""
         pending = [
             {
-                "type": "ModifyObjectState",
+                "type": "ModifyState",
                 "args": {
                     "object_id": "machine",
                     "new_state": "repaired"
@@ -206,7 +204,7 @@ class TestDeferredEffects:
         """Test multiple pending effects execute in order."""
         pending = [
             {"type": "CreateObject", "args": {"object_id": "result", "name": "Result", "location_id": "room"}},
-            {"type": "ModifyObjectState", "args": {"object_id": "machine", "new_state": "idle"}}
+            {"type": "ModifyState", "args": {"object_id": "machine", "new_state": "idle"}}
         ]
         
         world.set_agent_lock("Eve", 10, "processing", pending_effects=pending)
