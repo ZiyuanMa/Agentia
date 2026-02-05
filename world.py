@@ -7,7 +7,7 @@ import json
 from config import TICK_DURATION_MINUTES
 from schemas import WorldObject, Location
 from utils import LLMClient
-from env_agent import EnvironmentAgent
+from world_engine import WorldEngine
 
 logger = logging.getLogger("Agentia.World")
 
@@ -25,8 +25,8 @@ class World:
         # Time management - World is the single source of truth for simulation time
         self.sim_time = datetime(2024, 1, 1, 8, 0)  # Start Monday 8:00 AM
         
-        # Initialize EnvAgent if LLM client provided
-        self.env_agent = EnvironmentAgent(llm_client) if llm_client else None
+        # Initialize WorldEngine if LLM client provided
+        self.world_engine = WorldEngine(llm_client) if llm_client else None
         
         if isinstance(path_or_config, str):
             with open(path_or_config, 'r') as f:
@@ -55,13 +55,26 @@ class World:
 
         # Load Objects
         for obj_data in config.get("objects", []):
+            # Load internal state
+            internal_st = obj_data.get("internal_state", {})
+            
+            # Legacy support: if 'properties' list exists, merge into internal_state as booleans
+            if "properties" in obj_data:
+                for prop in obj_data["properties"]:
+                    internal_st[prop] = True
+            
+            # Legacy support: if 'attributes' exists, merge into internal_state
+            if "attributes" in obj_data:
+                internal_st.update(obj_data["attributes"])
+
             obj = WorldObject(
                 id=obj_data["id"],
                 name=obj_data["name"],
-                location_id=obj_data["location"], # Note: config uses 'location' but class uses 'location_id' for clarity, assuming mapping
+                location_id=obj_data.get("location_id") or obj_data.get("location"), # Support both keys
                 state=obj_data.get("state", "normal"),
                 description=obj_data["description"],
-                properties=obj_data.get("properties", [])
+                mechanics=obj_data.get("mechanics") or obj_data.get("env_description", ""), # Support both keys
+                internal_state=internal_st
             )
             self.objects[obj.id] = obj
 
@@ -121,7 +134,8 @@ class World:
 
     def create_object(self, object_id: str, name: str, location_id: str, 
                      state: str = "normal", description: str = "", 
-                     properties: List[str] = None) -> bool:
+                     mechanics: str = "",
+                     internal_state: Dict[str, Any] = None) -> bool:
         """Create a new object in the world. Returns success status."""
         if object_id in self.objects:
             self.logger.warning(f"Object {object_id} already exists")
@@ -133,7 +147,8 @@ class World:
             location_id=location_id,
             state=state,
             description=description,
-            properties=properties or []
+            mechanics=mechanics,
+            internal_state=internal_state or {}
         )
         self.objects[object_id] = obj
         
@@ -160,11 +175,9 @@ class World:
         self.logger.info(f"Destroyed object: {obj.name} ({object_id})")
         return True
 
-    def transfer_object(self, object_id: str, 
-                       from_location: str = None, to_location: str = None,
-                       from_agent: str = None, to_agent: str = None) -> bool:
+    def transfer_object(self, object_id: str, from_id: str, to_id: str) -> bool:
         """
-        Transfer an object between locations or agent inventories.
+        Transfer an object between IDs (Locations, Agents, or Containers).
         Returns success status.
         """
         obj = self.objects.get(object_id)
@@ -172,45 +185,58 @@ class World:
             self.logger.warning(f"Object {object_id} not found for transfer")
             return False
         
-        # Handle from_agent -> to_location (agent drops item)
-        # Handle from_agent -> to_agent (agent gives item)
-        # Handle from_location -> to_agent (agent picks up item)
-        # Handle from_location -> to_location (move object)
+        # --- REMOVE from Source ---
+        if from_id and from_id in self.locations:
+             if object_id in self.locations[from_id].objects:
+                self.locations[from_id].objects.remove(object_id)
         
-        if from_agent and to_location:
-            # Agent drops item to location
-            obj.location_id = to_location
-            if to_location in self.locations:
-                self.locations[to_location].objects.append(object_id)
-            self.logger.info(f"{from_agent} dropped {obj.name} at {to_location}")
+        # Note: If from_id is an Agent or Container, we don't need to update a list 
+        # because we only track location_id on the object itself for those cases.
+
+        # --- ADD to Destination ---
+        
+        # Update object's location pointer
+        obj.location_id = to_id
+        
+        # If destination is a Location (Room), update its list
+        if to_id in self.locations:
+            self.locations[to_id].objects.append(object_id)
+            self.logger.info(f"Transferred {obj.name} to location {to_id}")
             
-        elif from_location and to_agent:
-            # Agent picks up item from location
-            if from_location in self.locations:
-                if object_id in self.locations[from_location].objects:
-                    self.locations[from_location].objects.remove(object_id)
-            obj.location_id = None  # No longer at a location
-            self.logger.info(f"{to_agent} picked up {obj.name} from {from_location}")
-            
-        elif from_agent and to_agent:
-            # Agent gives item to another agent
-            self.logger.info(f"{from_agent} gave {obj.name} to {to_agent}")
-            
-        elif from_location and to_location:
-            # Move object between locations
-            if from_location in self.locations:
-                if object_id in self.locations[from_location].objects:
-                    self.locations[from_location].objects.remove(object_id)
-            
-            obj.location_id = to_location
-            if to_location in self.locations:
-                self.locations[to_location].objects.append(object_id)
-                
-            self.logger.info(f"Moved {obj.name} from {from_location} to {to_location}")
+        elif to_id in self.agent_locations: # It's an Agent
+             self.logger.info(f"Transferred {obj.name} to agent {to_id}")
+             
+        elif to_id in self.objects: # It's a Container Object
+             self.logger.info(f"Transferred {obj.name} into container {to_id}")
+             
         else:
-            self.logger.warning(f"Invalid transfer parameters for {object_id}")
-            return False
+             self.logger.warning(f"Transferred {obj.name} to unknown ID {to_id} (assuming external/agent)")
         
+        return True
+
+    def modify_object_state(self, object_id: str, new_state: str, new_description: str = None) -> bool:
+        """Update visible state and optional description."""
+        obj = self.objects.get(object_id)
+        if not obj:
+            self.logger.warning(f"Object {object_id} not found for state update")
+            return False
+            
+        obj.state = new_state
+        if new_description:
+            obj.description = new_description
+            
+        self.logger.info(f"Object {object_id} state -> {new_state}")
+        return True
+
+    def modify_object_internal_state(self, object_id: str, key: str, value: Any) -> bool:
+        """Update hidden internal state."""
+        obj = self.objects.get(object_id)
+        if not obj:
+            self.logger.warning(f"Object {object_id} not found for internal state update")
+            return False
+            
+        obj.internal_state[key] = value
+        self.logger.info(f"Object {object_id} internal_state[{key}] = {value}")
         return True
 
     def broadcast_to_location(self, location_id: str, message: str, exclude_agent: str = None):
@@ -250,7 +276,8 @@ class World:
             "people": "No one else",
             "objects": "None",
             "connections": "None",
-            "events": "None"
+            "events": "None",
+            "inventory": "Empty"
         }
         
         if not loc:
@@ -261,20 +288,22 @@ class World:
         
         # People present (excluding self)
         people = [p for p in loc.agents_present if p != agent_name]
-        data["people"] = str(people) if people else "No one else"
+        data["people"] = ", ".join(people) if people else "No one else"
         
-        # Objects in location with their states
         if loc.objects:
             objects_info = []
             for obj_id in loc.objects:
                 obj = self.get_object(obj_id)
                 if obj:
-                    objects_info.append(f"  - {obj.name} (id: {obj.id}, state: {obj.state})")
+                    # SimAgent sees name, id, STATE, and description
+                    base_info = f"  - {obj.name} (id: {obj.id}, state: {obj.state})\n    {obj.description}"
+                    objects_info.append(base_info)
+                    
             if objects_info:
                 data["objects"] = "\n".join(objects_info)
         
         # Connected locations
-        data["connections"] = str(loc.connected_to)
+        data["connections"] = ", ".join(loc.connected_to) if loc.connected_to else "None"
         
         # Recent events
         pending_events = self.get_pending_events(agent_name)
@@ -333,15 +362,15 @@ class World:
             if target:
                 obj = self.get_object(target)
                 if obj:
-                    # Always use EnvAgent for richer interaction handling
+                    # Always use WorldEngine for richer interaction handling
                     action_desc = content or ""
                     loc = self.get_location(current_location_id)
                     witnesses = loc.agents_present if loc else []
                     
-                    # Fetch inventory internally for EnvAgent
+                    # Fetch inventory internally for WorldEngine
                     current_inventory = self.get_agent_inventory(agent_name)
                     
-                    result = self.env_agent.resolve_interaction(
+                    result = self.world_engine.resolve_interaction(
                         agent_name=agent_name,
                         target_object=obj,
                         action_description=action_desc,
@@ -350,6 +379,16 @@ class World:
                         world=self,
                         inventory=current_inventory
                     )
+
+                    
+                    # Auto-broadcast successful interactions to others in the room
+                    if result.get("success") and loc:
+                        broadcast_msg = f"{agent_name}: {result.get('message')}"
+                        self.broadcast_to_location(
+                            current_location_id,
+                            broadcast_msg,
+                            exclude_agent=agent_name # The actor already knows the result
+                        )
                 else:
                     result["message"] = f"Object '{target}' not found."
             else:
@@ -408,10 +447,9 @@ class World:
             self.destroy_object(args.get("object_id"))
         elif effect_type == "TransferObject":
             self.transfer_object(**args)
-        elif effect_type == "ModifyObjectState":
-            obj = self.get_object(args.get("object_id"))
-            if obj:
-                obj.state = args.get("new_state")
-                logger.info(f"Deferred: Object {args.get('object_id')} state -> {args.get('new_state')}")
+        elif effect_type == "ModifyState":
+            self.modify_object_state(**args)
+        elif effect_type == "ModifyInternalState":
+            self.modify_object_internal_state(**args)
 
 

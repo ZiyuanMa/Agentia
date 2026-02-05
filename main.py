@@ -12,22 +12,31 @@ from logger_config import setup_logging, get_stats
 setup_logging()
 logger = logging.getLogger("Agentia.Main")
 
-# Default paths
-DEFAULT_WORLD_PATH = "data/world.json"
-DEFAULT_AGENTS_PATH = "data/agents.json"
+DEFAULT_SCENARIO_PATH = "data/scenario_office.json"
 
-def setup_world(world_path: str, agents_path: str):
-    logger.info(f"Initializing World from {world_path}...")
+
+def load_scenario(scenario_path: str):
+    """Load world and agents from a scenario file."""
+    logger.info(f"Loading scenario from {scenario_path}...")
+    
+    with open(scenario_path, 'r') as f:
+        scenario = json.load(f)
+    
+    logger.info(f"Scenario: {scenario.get('name', 'Unnamed')}")
+    logger.info(f"Description: {scenario.get('description', 'No description')}")
+    
+    return scenario.get("world", {}), scenario.get("agents", [])
+
+
+def setup_scenario(scenario_path: str):
+    """Initialize world and agents from a scenario file."""
+    world_config, agents_data = load_scenario(scenario_path)
+    
     llm_client = LLMClient()
+    world = World(world_config, llm_client=llm_client)
     
-    # Pass LLM client to World for EnvAgent
-    world = World(world_path, llm_client=llm_client)
+    logger.info(f"Initializing {len(agents_data)} agents...")
     
-    logger.info(f"Initializing Agents from {agents_path}...")
-    
-    with open(agents_path, 'r') as f:
-        agents_data = json.load(f)
-
     agents = []
     for agent_data in agents_data:
         agent = SimAgent(
@@ -40,10 +49,10 @@ def setup_world(world_path: str, agents_path: str):
             initial_goal=agent_data.get("initial_goal", "Explore the surroundings.")
         )
         agents.append(agent)
-        # Place agent in world (World is the single source of truth for location)
         world.place_agent(agent.name, agent_data["initial_location"])
             
     return world, agents
+
 
 async def game_loop(world: World, agents: list[SimAgent], ticks: int = 5):
     logger.info("Starting Game Loop (async)...")
@@ -90,7 +99,6 @@ async def game_loop(world: World, agents: list[SimAgent], ticks: int = 5):
                 action_type = decision.get("action_type", "unknown")
                 stats.record_action(agent.name, action_type)
                 
-                
                 result = world.process_action(agent.name, decision)
                 agent.update_state(result)
         
@@ -103,12 +111,11 @@ async def game_loop(world: World, agents: list[SimAgent], ticks: int = 5):
     for line in summary.split('\n'):
         logger.info(line)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Agentia - AI Agent Simulation")
-    parser.add_argument("--world", "-w", type=str, default=DEFAULT_WORLD_PATH,
-                        help=f"Path to world JSON file (default: {DEFAULT_WORLD_PATH})")
-    parser.add_argument("--agents", "-a", type=str, default=DEFAULT_AGENTS_PATH,
-                        help=f"Path to agents JSON file (default: {DEFAULT_AGENTS_PATH})")
+    parser.add_argument("--scenario", "-s", type=str, default=DEFAULT_SCENARIO_PATH,
+                        help=f"Path to scenario JSON file (default: {DEFAULT_SCENARIO_PATH})")
     parser.add_argument("--ticks", "-t", type=int, default=5,
                         help="Number of simulation ticks to run (default: 5)")
     parser.add_argument("--no-log-file", action="store_true",
@@ -119,6 +126,5 @@ if __name__ == "__main__":
     if args.no_log_file:
         setup_logging(enable_file=False)
     
-    world_instance, agents_list = setup_world(args.world, args.agents)
+    world_instance, agents_list = setup_scenario(args.scenario)
     asyncio.run(game_loop(world_instance, agents_list, ticks=args.ticks))
-

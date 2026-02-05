@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from world import World
 from schemas import WorldObject, Location
 from agent import SimAgent
-from env_agent import EnvironmentAgent
+from world_engine import WorldEngine
 from utils import LLMClient
 
 
@@ -92,6 +92,8 @@ def test_agent(mock_llm):
 
 
 @pytest.fixture
-def env_agent(mock_llm):
-    """Create a test environment agent."""
-    return EnvironmentAgent(mock_llm)
+def world_engine(mock_llm):
+    return WorldEngine(mock_llm)
+
+
+

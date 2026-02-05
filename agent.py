@@ -71,15 +71,8 @@ class SimAgent:
         
         system_prompt = self.get_system_prompt(TICK_DURATION_MINUTES)
         
-        # Prepare context variables
-        # inventory is now passed in world_context
-        # DEBUG: Log the inventory seen by the agent
-        inventory_context = world_context.get('inventory', 'Not Found')
-        self.logger.info(f"{self.name} Context Inventory: {inventory_context}")
-        
         # Build user message using template
         new_user_message = AGENT_USER_TEMPLATE.format(
-            tick=current_tick,
             status=self.status,
             **world_context
         )
@@ -163,7 +156,7 @@ class SimAgent:
             action_details += f"(content={content_preview})"
         
         self.logger.info(f"{self.name} decided: {action_details}")
-        self.logger.info(f"{self.name} reasoning: {result['reasoning'][:150]}...")
+        self.logger.info(f"{self.name} reasoning: {result['reasoning']}...")
         
         # Save both user context and assistant response to history
         self.memory.add_message("user", new_user_message)

@@ -29,8 +29,7 @@ Core Directives:
 """
 
 
-AGENT_USER_TEMPLATE = """Tick: {tick}
-Time: {time}
+AGENT_USER_TEMPLATE = """Time: {time}
 
 Location: {location_name}
 Description: {location_description}
@@ -52,20 +51,21 @@ Provide your decision in JSON format."""
 
 
 # -----------------------------------------------------------------------------
-# Environment Agent Prompts
+# World Engine Prompts
 # -----------------------------------------------------------------------------
 
-from schemas import get_env_agent_decision_schema
+from schemas import get_world_engine_decision_schema
 
-_ENV_DECISION_SCHEMA = get_env_agent_decision_schema()
+_WORLD_ENGINE_DECISION_SCHEMA = get_world_engine_decision_schema()
+# print(_WORLD_ENGINE_DECISION_SCHEMA) # Commented out debug print
 
-ENV_AGENT_SYSTEM_PROMPT = f"""You are the Environment Agent (Game Master) of Simworld.
-You interpret physical actions and determine their outcomes based on physics and common sense.
+WORLD_ENGINE_SYSTEM_PROMPT = f"""You are the **World Engine** of Simworld.
+You interpret physical actions and determine their outcomes based on physics, logic, and mechanics.
 
 You MUST output your response in strict JSON format.
 
 Output Format:
-{_ENV_DECISION_SCHEMA}
+{_WORLD_ENGINE_DECISION_SCHEMA}
 
 Your job is to:
 1. Analyze the action's feasibility given the actor's state and equipment
@@ -78,23 +78,26 @@ Guidelines:
 - Check for required items (e.g., keys, tools) in the inventory before allowing an action.
 - Be realistic: untrained people can't fix complex machinery
 - Consider time: repairs take time, use lock_agent effect for long actions
-- Consider danger: broadcast warnings if something dangerous happens
-- Object states should be descriptive: 'working', 'broken', 'empty', 'hot', etc.
-- USE modify_state: When an object's condition changes (e.g., 'broken' -> 'fixed', 'closed' -> 'open').
-- USE create_object: When an action produces a NEW tangible item (e.g., brewing coffee, printing a document). You can create an object directly in an agent's inventory by setting 'location_id' to the agent's name.
-- USE destroy_object: When an item is consumed or irreversibly destroyed (e.g., drinking coffee, burning paper).
-- USE transfer_object: To move an existing object. You CANNOT transfer an object that does not exist.
+- Consider danger: Mention dangerous outcomes clearly in the result message.
+- USE modify_state: To change the VISIBLE state of an object (e.g., 'closed' -> 'open'). If appearance changes significantly, provide 'new_description'.
+- USE modify_internal_state: To update HIDDEN logic variables (e.g., locked=false, health=50, fuel_level=100).
+- USE create_object: When an action produces a NEW tangible item.
+- USE destroy_object: When an item is consumed or destroyed.
+- USE transfer_object: To move an existing object between locations/agents.
 """
 
-ENV_AGENT_CONTEXT_TEMPLATE = """[Context - Actor]
+WORLD_ENGINE_CONTEXT_TEMPLATE = """[Context - Actor]
 Name: {agent_name}
 Inventory: {inventory}
 
 [Context - Target Object]
 Object: {object_name} (ID: {object_id})
-Current State: "{object_state}"
-Properties: {object_properties}
-Description: {object_description}
+Current State (Visible): "{object_state}"
+Description (Visible): {object_description}
+Internal State (Hidden): {object_internal_state}
+
+[MECHANICS / RULES]: 
+{object_mechanics}
 
 [Context - Environment]
 Location: {location_name} (ID: {location_id})

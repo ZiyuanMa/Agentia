@@ -1,0 +1,177 @@
+{
+    "name": "TechCorp Office",
+    "description": "A typical tech company office during a server crisis morning",
+    "world": {
+        "locations": [
+            {
+                "id": "lobby",
+                "name": "Building Lobby",
+                "description": "A spacious modern lobby with marble floors and a reception desk.",
+                "connected_to": ["hallway_main", "outside"],
+                "objects": ["reception_desk", "couch_01"]
+            },
+            {
+                "id": "outside",
+                "name": "Courtyard",
+                "description": "A small outdoor courtyard with benches and a fountain.",
+                "connected_to": ["lobby"],
+                "objects": ["bench_01", "fountain_01"]
+            },
+            {
+                "id": "hallway_main",
+                "name": "Main Hallway",
+                "description": "A long hallway with motivational posters on the walls.",
+                "connected_to": ["lobby", "office_main", "kitchen", "server_room"],
+                "objects": ["water_cooler"]
+            },
+            {
+                "id": "office_main",
+                "name": "Open Plan Office",
+                "description": "A busy open plan office with rows of desks and monitors.",
+                "connected_to": ["hallway_main", "meeting_room", "manager_office"],
+                "objects": ["desk_alice", "desk_bob", "desk_charlie", "printer_01", "whiteboard_tasks"]
+            },
+            {
+                "id": "manager_office",
+                "name": "Manager's Office",
+                "description": "A private corner office with a large desk and awards on the wall.",
+                "connected_to": ["office_main"],
+                "objects": ["desk_manager", "bookshelf_01"]
+            },
+            {
+                "id": "meeting_room",
+                "name": "Meeting Room Alpha",
+                "description": "A conference room with projector and whiteboard.",
+                "connected_to": ["office_main"],
+                "objects": ["conference_table", "projector_01", "whiteboard_meeting"]
+            },
+            {
+                "id": "kitchen",
+                "name": "Break Room",
+                "description": "A cozy break room with coffee machine and refrigerator.",
+                "connected_to": ["hallway_main"],
+                "objects": ["coffee_machine", "fridge", "microwave", "snack_cabinet"]
+            },
+            {
+                "id": "server_room",
+                "name": "Server Room",
+                "description": "A cold, noisy room with server racks and blinking lights.",
+                "connected_to": ["hallway_main"],
+                "objects": ["server_rack_01", "server_rack_02", "monitoring_station"]
+            }
+        ],
+        "objects": [
+            {
+                "id": "coffee_machine",
+                "name": "Espresso Machine",
+                "location": "kitchen",
+                "state": "working",
+                "description": "A fancy Italian espresso machine.",
+                "properties": ["interactive", "electric"]
+            },
+            {
+                "id": "fridge",
+                "name": "Refrigerator",
+                "location": "kitchen",
+                "state": "closed",
+                "description": "A refrigerator stocked with drinks and lunches.",
+                "properties": ["interactive", "electric", "container"]
+            },
+            {
+                "id": "microwave",
+                "name": "Microwave",
+                "location": "kitchen",
+                "state": "idle",
+                "description": "A standard office microwave.",
+                "properties": ["interactive", "electric"]
+            },
+            {
+                "id": "printer_01",
+                "name": "Office Printer",
+                "location": "office_main",
+                "state": "paper_jam",
+                "description": "A large laser printer that frequently jams.",
+                "properties": ["interactive", "electric", "repairable"]
+            },
+            {
+                "id": "server_rack_01",
+                "name": "Primary Server",
+                "location": "server_room",
+                "state": "overheating",
+                "description": "The main server running critical systems. Warning lights blinking.",
+                "properties": ["electronic", "sensitive", "dangerous"]
+            },
+            {
+                "id": "monitoring_station",
+                "name": "System Monitor",
+                "location": "server_room",
+                "state": "alert",
+                "description": "A computer showing system dashboards with red alerts.",
+                "properties": ["interactive", "electronic"]
+            },
+            {
+                "id": "water_cooler",
+                "name": "Water Cooler",
+                "location": "hallway_main",
+                "state": "full",
+                "description": "The unofficial social hub of the office.",
+                "properties": ["interactive"]
+            },
+            {
+                "id": "fountain_01",
+                "name": "Courtyard Fountain",
+                "location": "outside",
+                "state": "running",
+                "description": "A peaceful stone fountain.",
+                "properties": ["decorative"]
+            }
+        ]
+    },
+    "agents": [
+        {
+            "name": "Alice",
+            "age": 32,
+            "occupation": "Office Manager",
+            "personality": "Organized and responsible, but easily stressed when things go wrong.",
+            "background": "Former legal assistant for 5 years at a high-pressure firm. Switched careers last year.",
+            "initial_location": "office_main",
+            "initial_goal": "Check morning emails and make sure everyone has what they need."
+        },
+        {
+            "name": "Bob",
+            "age": 28,
+            "occupation": "Software Developer",
+            "personality": "Quiet and focused. Loves coffee and hates interruptions.",
+            "background": "Self-taught programmer who started coding at age 12. Dropped out of college to join a startup.",
+            "initial_location": "kitchen",
+            "initial_goal": "Get coffee before debugging that production bug."
+        },
+        {
+            "name": "Charlie",
+            "age": 45,
+            "occupation": "IT Manager",
+            "personality": "Experienced and calm under pressure. Knows every system inside out.",
+            "background": "Worked as a systems administrator for 20 years across finance and healthcare sectors.",
+            "initial_location": "server_room",
+            "initial_goal": "Investigate the server overheating alerts before they cause an outage."
+        },
+        {
+            "name": "Diana",
+            "age": 26,
+            "occupation": "Marketing Coordinator",
+            "personality": "Energetic and social. Always chatting with colleagues.",
+            "background": "Graduated with a BA in Communications last year. Organized campus events as student council president.",
+            "initial_location": "lobby",
+            "initial_goal": "Find someone to brainstorm ideas for the new campaign."
+        },
+        {
+            "name": "Eve",
+            "age": 38,
+            "occupation": "Department Manager",
+            "personality": "Ambitious and results-driven. Currently stressed about quarterly targets.",
+            "background": "Holds an MBA from a top-tier business school. Previously managed a sales team at a Fortune 500 company.",
+            "initial_location": "manager_office",
+            "initial_goal": "Review quarterly reports and prepare for the 10 AM meeting."
+        }
+    ]
+}

@@ -6,14 +6,14 @@ Agentia is a lightweight, highly extensible virtual society simulator driven by 
 
 Agentia solves the "rigid action" and "limited interaction" problems of traditional agent simulations (like Generative Agents) through a unique **Hybrid Environment Architecture**:
 *   **Layer 1 (Fast Path)**: Deterministic physics handled by code (Moving, specific rigid interactions). Zero token cost.
-*   **Layer 2 (Slow Path)**: Complex interactions handled by an **Environment Agent** (LLM). This "Game Master" decides the physical consequences of creative or undefined actions.
+*   **Layer 2 (Slow Path)**: Complex interactions handled by an **World Engine** (LLM). This "Game Master" decides the physical consequences of creative or undefined actions.
 
 ## ✨ Key Features
 
 *   **Action as Function**: Agents output **Structured JSON decisions** (validated via Pydantic), ensuring reliability without the complexity of native function calling APIs.
 *   **Graph-based Topology**: Locations are nodes in a `NetworkX` graph, supporting navigation and logical connections.
 *   **Interactive Objects**: Everything from a coffee machine to a server rack has state and properties.
-*   **EnvAgent System**: A dedicated LLM that acts as the physics engine for complex prompts like "fix the broken server" or "pour water on the computer".
+*   **WorldEngine System**: A dedicated LLM that acts as the physics engine for complex prompts like "fix the broken server" or "pour water on the computer".
 
 ## 🤖 Agent Capabilities
 
@@ -24,7 +24,7 @@ These are the autonomous entities living in the world. Their reasoning focuses o
 *   `InteractAction`: Attempt to use/manipulate an object (e.g., "Use Coffee Machine", "Unlock Door").
 *   `WaitAction`: Idling or observing.
 
-### EnvAgent (The Environment)
+### WorldEngine (The Environment)
 This is the "Game Master" agent that resolves complex physics and causality when a SimAgent interacts with an object.
 *   `ModifyStateAction`: Change an object's state (e.g., "Coffee Machine" -> "Broken").
 *   `CreateObjectAction`: Spawn new items (e.g., "Cup of Coffee").
@@ -71,13 +71,12 @@ python main.py
 
 Options:
 *   `--no-log-file`: Disable writing logs to disk.
-*   `--world`: Path to world definition JSON (default: `data/world.json`)
-*   `--agents`: Path to agent definition JSON (default: `data/agents.json`)
-*   `--ticks`: Number of simulation ticks to run (default: 5)
+*   `--scenario`, `-s`: Path to scenario JSON file (default: `data/scenario_office.json`)
+*   `--ticks`, `-t`: Number of simulation ticks to run (default: 5)
 
 Example:
 ```bash
-python main.py --ticks 10 --world data/world_office.json
+python main.py --ticks 10 --scenario data/scenario_coffee_shop.json
 ```
 
 ## 📂 Project Structure
@@ -87,7 +86,7 @@ agentia/
 ├── main.py              # Entry point: Game Loop & concurrency management
 ├── world.py             # World Model: Graph topology, object state, time
 ├── agent.py             # Agent Model: Decision logic, memory, prompting
-├── env_agent.py         # Environment Agent: "Game Master" logic
+├── world_engine.py         # World Engine: "Game Master" logic
 ├── schemas.py           # Pydantic Models: Defines all interactions & data
 ├── config.py            # Configuration & Constants
 ├── data/                # JSON definitions for worlds and agents
@@ -101,12 +100,29 @@ agentia/
 2.  **Decision**: Agent outputs a JSON decision (`move`, `talk`, `interact`, `wait`).
 3.  **Routing**:
     *   `move/talk` -> Handled immediately by `World` logic.
-    *   `interact` -> Sent to `EnvironmentAgent` if complex.
+    *   `interact` -> Sent to `WorldEngine` if complex.
 4.  **Execution**: State is updated, time advances.
 *   **File Output**: Logs are saved to `logs/agentia_YYYYMMDD_HHMMSS.log`.
 
-### Customizing the World
-You can create new worlds by defining a JSON file in `data/`. See `data/world_office.json` for an example of defining Locations, Objects, and Connections.
+### Customizing Scenarios
+
+Scenarios define a complete simulation environment including the world (locations, objects) and the agents that inhabit it.
+
+Create a new scenario by defining a JSON file with this structure:
+
+```json
+{
+    "name": "Coffee Shop Morning",
+    "description": "A busy coffee shop during morning rush hour",
+    "world": {
+        "locations": [...],
+        "objects": [...]
+    },
+    "agents": [...]
+}
+```
+
+See `data/scenario_office.json` for a complete example.
 
 ## 📄 License
 MIT License
