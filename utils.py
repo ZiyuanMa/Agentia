@@ -47,7 +47,7 @@ class LLMClient:
     def chat_completion(self, messages: List[Dict[str, str]], 
                         tools: Optional[List[Dict]] = None,
                         response_format: Optional[Dict] = None) -> Any:
-        """Sync chat completion for EnvAgent with optional JSON output mode."""
+        """Sync chat completion for WorldEngine with optional JSON output mode."""
         try:
             params = {
                 "model": self.model,

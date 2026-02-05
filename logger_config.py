@@ -33,13 +33,13 @@ class ColorFormatter(logging.Formatter):
         
         # Colorize based on logger name
         # Colorize based on logger name
-        if "Agent." in record.name and "EnvAgent" not in record.name:
+        if "Agent." in record.name and "WorldEngine" not in record.name:
             # Individual agents get unique colors based on name hash
             agent_name = record.name.split(".")[-1]
             color_code = 91 + (hash(agent_name) % 6)  # Colors 91-96
             color = f"\x1b[{color_code}m"
             log_fmt = color + self.FORMAT + self.RESET
-        elif "EnvAgent" in record.name:
+        elif "WorldEngine" in record.name:
             log_fmt = self.MAGENTA + self.FORMAT + self.RESET
         elif "Main" in record.name:
             log_fmt = self.BOLD_CYAN + self.FORMAT + self.RESET
@@ -85,7 +85,7 @@ class SimulationStats:
         self.tick_count = 0
         self.action_counts: Dict[str, int] = defaultdict(int)
         self.agent_action_counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
-        self.env_agent_calls = 0
+        self.world_engine_calls = 0
         self.api_calls = 0
         self.errors = 0
         self.events: list = []
@@ -99,9 +99,9 @@ class SimulationStats:
         """Record a completed tick."""
         self.tick_count += 1
     
-    def record_env_agent_call(self):
-        """Record an EnvAgent call."""
-        self.env_agent_calls += 1
+    def record_world_engine_call(self):
+        """Record a WorldEngine call."""
+        self.world_engine_calls += 1
     
     def record_api_call(self):
         """Record an API call."""
@@ -131,7 +131,7 @@ class SimulationStats:
             f"  Duration:        {duration.total_seconds():.1f} seconds",
             f"  Total Ticks:     {self.tick_count}",
             f"  API Calls:       {self.api_calls}",
-            f"  EnvAgent Calls:  {self.env_agent_calls}",
+            f"  WorldEngine Calls:  {self.world_engine_calls}",
             f"  Errors:          {self.errors}",
             "",
             "  --- Action Distribution ---",
@@ -165,7 +165,7 @@ class SimulationStats:
             "duration_seconds": (datetime.now() - self.start_time).total_seconds(),
             "tick_count": self.tick_count,
             "api_calls": self.api_calls,
-            "env_agent_calls": self.env_agent_calls,
+            "world_engine_calls": self.world_engine_calls,
             "errors": self.errors,
             "action_counts": dict(self.action_counts),
             "agent_action_counts": {k: dict(v) for k, v in self.agent_action_counts.items()},

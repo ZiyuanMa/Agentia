@@ -27,8 +27,7 @@ def _record_world_engine_call():
         from logger_config import get_stats
         stats = get_stats()
         if stats:
-            # Legacy stat name
-            stats.record_env_agent_call()
+            stats.record_world_engine_call()
     except ImportError:
         pass
 
