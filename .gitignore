@@ -4,3 +4,4 @@ venv/
 logs/
 .pytest_cache/
 tests/__pycache__
+AGENTS.md
