@@ -4,7 +4,7 @@ import networkx as nx
 import logging
 import json
 
-from config import TICK_DURATION_MINUTES
+from config import TICK_DURATION_MINUTES, SIMULATION_START_TIME
 from schemas import WorldObject, Location
 from utils import LLMClient
 from world_engine import WorldEngine
@@ -13,17 +13,19 @@ logger = logging.getLogger("Agentia.World")
 
 
 class World:
+    """The simulation world containing locations, objects, and agents."""
+    
     def __init__(self, path_or_config, llm_client: LLMClient = None):
         self.logger = logging.getLogger("Agentia.World")
         self.graph = nx.Graph()
         self.locations: Dict[str, Location] = {}
         self.objects: Dict[str, WorldObject] = {}
-        self.pending_events: Dict[str, List[str]] = {}  # agent_name -> list of events
-        self.agent_locks: Dict[str, Dict] = {}  # agent_name -> lock info
-        self.agent_locations: Dict[str, str] = {}  # agent_name -> location_id (single source of truth)
+        self.pending_events: Dict[str, List[str]] = {}
+        self.agent_locks: Dict[str, Dict] = {}
+        self.agent_locations: Dict[str, str] = {}
         
         # Time management - World is the single source of truth for simulation time
-        self.sim_time = datetime(2024, 1, 1, 8, 0)  # Start Monday 8:00 AM
+        self.sim_time = SIMULATION_START_TIME
         
         # Initialize WorldEngine if LLM client provided
         self.world_engine = WorldEngine(llm_client) if llm_client else None

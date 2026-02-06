@@ -3,28 +3,23 @@ from pydantic import BaseModel, Field, ValidationError
 import logging
 import json
 from utils import LLMClient
-from config import TICK_DURATION_MINUTES
+from config import TICK_DURATION_MINUTES, DEFAULT_AGENT_STATUS
 from schemas import AgentDecision
 from prompts import AGENT_SYSTEM_PROMPT, AGENT_USER_TEMPLATE
 
 
 class AgentMemory(BaseModel):
+    """Memory storage for SimAgent."""
     short_term: List[str] = Field(default_factory=list)
     long_term_summary: str = ""
-    # History of simple dictionaries (user, assistant, system)
     chat_history: List[Dict[str, str]] = Field(default_factory=list)
 
     def get_recent_memories(self, limit: int = 5) -> str:
+        """Get the most recent short-term memories as a formatted string."""
         return "\n".join(self.short_term[-limit:])
 
-    def add_interaction(self, user_content: str, assistant_content: str):
-        # Deprecated: usage for string-only context
-        self.chat_history.append({"role": "user", "content": user_content})
-        self.chat_history.append({"role": "assistant", "content": assistant_content})
-
-    
-    def add_message(self, role: str, content: str):
-        """Add a simplified message to history."""
+    def add_message(self, role: str, content: str) -> None:
+        """Add a message to chat history."""
         self.chat_history.append({"role": role, "content": content})
 
 
@@ -43,14 +38,11 @@ class SimAgent:
         self.personality = personality
         self.background = background
         self.current_goal = initial_goal
-        self.busy_until = 0 # Timestamp or tick count
-        
+        self.busy_until = 0
         self.memory = AgentMemory()
         self.llm = llm_client
         self.logger = logging.getLogger(f"Agentia.Agent.{self.name}")
-        
-        # self.inventory removed - stateless design
-        self.status: Dict[str, Any] = {"fatigue": "low", "stress": "low"}
+        self.status: Dict[str, Any] = DEFAULT_AGENT_STATUS.copy()
 
     def get_system_prompt(self, tick_duration: int) -> str:
         return AGENT_SYSTEM_PROMPT.format(
@@ -164,23 +156,13 @@ class SimAgent:
         
         return result
 
-    def update_state(self, action_result: Dict[str, Any]):
-        """
-        Updates the agent's state and memory based on the result of an action.
-        """
+    def update_state(self, action_result: Dict[str, Any]) -> None:
+        """Update agent's state and memory based on action result."""
         if "message" in action_result:
             self.memory.short_term.append(f"System: {action_result['message']}")
             self.logger.info(f"{self.name} memory updated: {action_result['message']}")
         
-        # No need for 'tool' messages anymore in JSON mode.
-        # We can simulate the continuity by summarizing the outcome in the next user prompt
-        # or appending a system message now.
-        pass
-        
-        # Determine if stress/fatigue changed
-        if action_result.get("success", True):
-             # Placeholder for complex state update
-             pass
-        else:
-             self.status["stress"] = "medium" # Failed actions cause stress
+        # Update stress based on action success
+        if not action_result.get("success", True):
+            self.status["stress"] = "medium"
 

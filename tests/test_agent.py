@@ -57,16 +57,6 @@ class TestAgentMemory:
         assert "Event 9" in recent
         assert "Event 0" not in recent
 
-    def test_add_interaction(self):
-        """Test adding chat history interaction."""
-        memory = AgentMemory()
-        memory.add_interaction("Hello", "Hi there!")
-        
-        assert len(memory.chat_history) == 2
-        assert memory.chat_history[0]["role"] == "user"
-        assert memory.chat_history[0]["content"] == "Hello"
-        assert memory.chat_history[1]["role"] == "assistant"
-
     def test_add_message(self):
         """Test adding a single message to history."""
         memory = AgentMemory()

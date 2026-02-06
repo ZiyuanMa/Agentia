@@ -3,10 +3,10 @@ from typing import Any, Dict, List, Optional
 from openai import OpenAI, AsyncOpenAI
 from config import OPENAI_API_KEY, MODEL_NAME, OPENAI_BASE_URL
 
-logger = logging.getLogger("Simworld")
+logger = logging.getLogger("Agentia.Utils")
 
 
-def _record_api_call():
+def _record_api_call() -> None:
     """Record an API call to stats if available."""
     try:
         from logger_config import get_stats
@@ -17,7 +17,7 @@ def _record_api_call():
         pass
 
 
-def _record_error():
+def _record_error() -> None:
     """Record an error to stats if available."""
     try:
         from logger_config import get_stats
@@ -29,7 +29,9 @@ def _record_error():
 
 
 class LLMClient:
-    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
+    """Wrapper client for OpenAI-compatible LLM API calls."""
+    
+    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None) -> None:
         if not api_key:
             api_key = OPENAI_API_KEY
         
@@ -44,10 +46,13 @@ class LLMClient:
         self.async_client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         self.model = MODEL_NAME
 
-    def chat_completion(self, messages: List[Dict[str, str]], 
-                        tools: Optional[List[Dict]] = None,
-                        response_format: Optional[Dict] = None) -> Any:
-        """Sync chat completion for WorldEngine with optional JSON output mode."""
+    def chat_completion(
+        self, 
+        messages: List[Dict[str, str]], 
+        tools: Optional[List[Dict]] = None,
+        response_format: Optional[Dict] = None
+    ) -> Any:
+        """Sync chat completion with optional JSON output mode."""
         try:
             params = {
                 "model": self.model,
@@ -73,8 +78,13 @@ class LLMClient:
             _record_error()
             return None
 
-    async def async_chat_completion(self, messages: List[Dict[str, str]], tools: Optional[List[Dict]] = None) -> Any:
-        """Async chat completion with optional function calling."""
+    async def async_chat_completion(
+        self, 
+        messages: List[Dict[str, str]], 
+        tools: Optional[List[Dict]] = None,
+        response_format: Optional[Dict] = None
+    ) -> Any:
+        """Async chat completion with optional JSON output mode."""
         try:
             params = {
                 "model": self.model,
@@ -88,11 +98,14 @@ class LLMClient:
             if tools:
                 params["tools"] = tools
                 params["tool_choice"] = "auto"
+            
+            if response_format:
+                params["response_format"] = response_format
 
             response = await self.async_client.chat.completions.create(**params)
             _record_api_call()
             return response.choices[0].message
         except Exception as e:
-            logger.error(f"Async LLM Chat Completion Error: {e}")
+            logger.error(f"Async LLM API Call Error: {e}")
             _record_error()
             return None

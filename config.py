@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,9 +18,16 @@ MODEL_NAME = os.getenv("MODEL_NAME", "mimo-v2-flash")
 
 TICK_DURATION_MINUTES = 10
 
+# Initial simulation time (Monday 8:00 AM)
+SIMULATION_START_TIME = datetime(2024, 1, 1, 8, 0)
+
+# Default agent status values
+DEFAULT_AGENT_STATUS = {"fatigue": "low", "stress": "low"}
+
 # =============================================================================
 # File Paths
 # =============================================================================
 
 DEFAULT_WORLD_PATH = "data/world.json"
 DEFAULT_AGENTS_PATH = "data/agents.json"
+

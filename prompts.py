@@ -2,14 +2,16 @@
 # Prompts for Simworld LLM Agents
 # =============================================================================
 
-from schemas import get_agent_decision_schema
+from schemas import get_agent_decision_schema, get_world_engine_decision_schema
+
+# Generate schemas at module load time
+_DECISION_SCHEMA = get_agent_decision_schema()
+_WORLD_ENGINE_DECISION_SCHEMA = get_world_engine_decision_schema()
+
 
 # -----------------------------------------------------------------------------
 # SimAgent Prompts
 # -----------------------------------------------------------------------------
-
-# Schema is dynamically injected from config.py
-_DECISION_SCHEMA = get_agent_decision_schema()
 
 AGENT_SYSTEM_PROMPT = f"""You are {{name}}, a {{age}}-year-old {{occupation}}.
 Personality: {{personality}}
@@ -49,15 +51,9 @@ Status: {status}
 Provide your decision in JSON format."""
 
 
-
 # -----------------------------------------------------------------------------
 # World Engine Prompts
 # -----------------------------------------------------------------------------
-
-from schemas import get_world_engine_decision_schema
-
-_WORLD_ENGINE_DECISION_SCHEMA = get_world_engine_decision_schema()
-# print(_WORLD_ENGINE_DECISION_SCHEMA) # Commented out debug print
 
 WORLD_ENGINE_SYSTEM_PROMPT = f"""You are the **World Engine** of Simworld.
 You interpret physical actions and determine their outcomes based on physics, logic, and mechanics.
