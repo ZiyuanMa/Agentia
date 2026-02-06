@@ -202,29 +202,34 @@ class World:
         
         return True
 
-    def modify_object_state(self, object_id: str, new_state: str, new_description: str = None) -> bool:
-        """Update visible state and optional description."""
+    def update_object(self, object_id: str, state: str = None, 
+                       description: str = None, internal_state: dict = None) -> bool:
+        """
+        Update any field(s) of an object. Only provided (non-None) fields will be updated.
+        internal_state is merged with existing values, not replaced entirely.
+        """
         obj = self.objects.get(object_id)
         if not obj:
-            self.logger.warning(f"Object {object_id} not found for state update")
+            self.logger.warning(f"Object {object_id} not found for update")
             return False
+        
+        updates = []
+        
+        if state is not None:
+            obj.state = state
+            updates.append(f"state={state}")
             
-        obj.state = new_state
-        if new_description:
-            obj.description = new_description
+        if description is not None:
+            obj.description = description
+            updates.append(f"description updated")
             
-        self.logger.info(f"Object {object_id} state -> {new_state}")
-        return True
-
-    def modify_object_internal_state(self, object_id: str, key: str, value: Any) -> bool:
-        """Update hidden internal state."""
-        obj = self.objects.get(object_id)
-        if not obj:
-            self.logger.warning(f"Object {object_id} not found for internal state update")
-            return False
-            
-        obj.internal_state[key] = value
-        self.logger.info(f"Object {object_id} internal_state[{key}] = {value}")
+        if internal_state is not None:
+            obj.internal_state.update(internal_state)
+            updates.append(f"internal_state+={internal_state}")
+        
+        if updates:
+            self.logger.info(f"Object {object_id} updated: {', '.join(updates)}")
+        
         return True
 
     def broadcast_to_location(self, location_id: str, message: str, exclude_agent: str = None) -> None:
@@ -445,9 +450,7 @@ class World:
             self.destroy_object(args.get("object_id"))
         elif effect_type == "TransferObject":
             self.transfer_object(**args)
-        elif effect_type == "ModifyState":
-            self.modify_object_state(**args)
-        elif effect_type == "ModifyInternalState":
-            self.modify_object_internal_state(**args)
+        elif effect_type == "UpdateObject":
+            self.update_object(**args)
 
 

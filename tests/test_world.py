@@ -154,14 +154,14 @@ class TestDeferredEffects:
         assert coffee.name == "Coffee Cup"
         assert coffee.state == "hot"
 
-    def test_pending_modify_object_state(self, world):
-        """Test deferred ModifyObjectState."""
+    def test_pending_update_object(self, world):
+        """Test deferred UpdateObject."""
         pending = [
             {
-                "type": "ModifyState",
+                "type": "UpdateObject",
                 "args": {
                     "object_id": "machine",
-                    "new_state": "repaired"
+                    "state": "repaired"
                 }
             }
         ]
@@ -204,7 +204,7 @@ class TestDeferredEffects:
         """Test multiple pending effects execute in order."""
         pending = [
             {"type": "CreateObject", "args": {"object_id": "result", "name": "Result", "location_id": "room"}},
-            {"type": "ModifyState", "args": {"object_id": "machine", "new_state": "idle"}}
+            {"type": "UpdateObject", "args": {"object_id": "machine", "state": "idle"}}
         ]
         
         world.set_agent_lock("Eve", 10, "processing", pending_effects=pending)

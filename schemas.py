@@ -96,36 +96,26 @@ class AgentDecision(BaseModel):
 # WorldEngine Action Models
 # =============================================================================
 
-class ResultAction(BaseModel):
-    """Report the outcome of the interaction to the actor."""
-    action: Literal["result"] = "result"
+class InteractionResult(BaseModel):
+    """
+    The outcome of an interaction - immediate or time-delayed.
+    If duration > 0, the agent is locked and effects are deferred until completion.
+    """
     success: bool
-    message: str = Field(description="Narrative of what happened")
+    message: str = Field(description="Result message. Shown immediately if duration=0, or after completion if duration>0.")
+    
+    # Time cost (optional - for actions that take time)
+    duration: int = Field(0, description="Duration in minutes. If > 0, agent is locked.")
+    task_description: Optional[str] = Field(None, description="Description of the ongoing task (e.g. 'repairing')")
 
 
-class ModifyStateAction(BaseModel):
-    """Change the VISIBLE state of an object (e.g. open/closed, on/off)."""
-    action: Literal["modify_state"] = "modify_state"
+class UpdateObjectAction(BaseModel):
+    """Update any field(s) of an object. Only provided fields will be updated."""
+    action: Literal["update_object"] = "update_object"
     object_id: str
-    new_state: str
-    new_description: Optional[str] = Field(None, description="Updated visible description if appearance changes")
-
-
-class ModifyInternalStateAction(BaseModel):
-    """Update a specific key in an object's HIDDEN internal_state."""
-    action: Literal["modify_internal_state"] = "modify_internal_state"
-    object_id: str
-    key: str
-    value: Any
-
-
-class LockAgentAction(BaseModel):
-    """Lock an agent for a duration (for time-consuming actions)."""
-    action: Literal["lock_agent"] = "lock_agent"
-    agent_name: str
-    duration_minutes: int
-    description: str
-    completion_message: str = ""
+    state: Optional[str] = Field(None, description="New visible state (e.g. 'open', 'broken', 'active')")
+    description: Optional[str] = Field(None, description="New visible description")
+    internal_state: Optional[dict] = Field(None, description="Updates to internal state (merged with existing)")
 
 
 class CreateObjectAction(BaseModel):
@@ -154,12 +144,9 @@ class TransferObjectAction(BaseModel):
     to_id: str = Field(description="Destination ID (Room ID, Agent ID, or Container ID)")
 
 
-# Union of all WorldEngine action types
-WorldEngineAction = Union[
-    ResultAction,
-    ModifyStateAction,
-    ModifyInternalStateAction,
-    LockAgentAction,
+# Union of world effect actions (changes to the world state)
+WorldEffect = Union[
+    UpdateObjectAction,
     CreateObjectAction,
     DestroyObjectAction,
     TransferObjectAction,
@@ -169,10 +156,11 @@ WorldEngineAction = Union[
 class WorldEngineDecision(BaseModel):
     """
     The complete output format for WorldEngine's decision.
-    WorldEngine validates actions using this model.
+    Separates the interaction result from world effects for clarity.
     """
-    reasoning: str = Field(description="Step-by-step analysis of the situation and physics before deciding outcomes")
-    decisions: List[WorldEngineAction] = Field(description="List of actions to execute, starting with a ResultAction")
+    reasoning: str = Field(description="Step-by-step analysis of the situation and physics")
+    result: InteractionResult = Field(description="The outcome of the interaction")
+    effects: List[WorldEffect] = Field(default_factory=list, description="Optional list of world state changes")
 
 
 # =============================================================================

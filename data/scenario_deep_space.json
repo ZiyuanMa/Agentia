@@ -1,135 +1,135 @@
 {
-    "name": "Deep Space Survival",
-    "description": "Solo survival scenario. Dr. Elena Vance wakes up alone on a damaged space station.",
+    "name": "Deep Space Survival - Keycard Edition",
+    "description": "Solo survival scenario. Escape the station by finding keys and access codes.",
     "world": {
         "locations": [
             {
                 "id": "cryo_bay",
                 "name": "Cryo Bay",
-                "description": "A cold, sterile room filled with frost-covered cryo-sleep pods. The lighting is dim, provided only by flickering emergency strips. The hum of life support is the only sound.",
+                "description": "A cold, frost-covered room. Emergency lights flicker.",
                 "connected_to": [
-                    "corridor_alpha"
+                    "corridor"
                 ],
                 "objects": [
-                    "locker",
-                    "cryo_pod"
+                    "cryo_pod",
+                    "dead_technician"
                 ]
             },
             {
-                "id": "corridor_alpha",
-                "name": "Corridor Alpha",
-                "description": "A long, dark metal corridor. Sparks fly intermittently from a damaged conduit overhead. The air smells of ozone and stale recycled oxygen.",
+                "id": "corridor",
+                "name": "Main Corridor",
+                "description": "A long hallway connecting the ship's sectors.",
                 "connected_to": [
                     "cryo_bay",
-                    "storage_room",
-                    "engineering"
+                    "engineering",
+                    "bridge"
                 ],
-                "objects": [
-                    "maintenance_terminal"
-                ]
-            },
-            {
-                "id": "storage_room",
-                "name": "Storage Room",
-                "description": "A cluttered storage area packed with crates and equipment. Gravity feels slightly unstable here due to local plating damage.",
-                "connected_to": [
-                    "corridor_alpha"
-                ],
-                "objects": [
-                    "supply_crate",
-                    "fuel_cell"
-                ]
+                "objects": []
             },
             {
                 "id": "engineering",
-                "name": "Engineering Deck",
-                "description": "The massive heart of the ship. The Main Reactor dominates the center, currently silent and dark. Consoles surround the perimeter.",
+                "name": "Engineering",
+                "description": "Humming with machinery. A secure locker sits against the wall.",
                 "connected_to": [
-                    "corridor_alpha",
-                    "bridge"
+                    "corridor"
                 ],
                 "objects": [
-                    "main_reactor"
+                    "log_terminal",
+                    "secure_locker"
                 ]
             },
             {
                 "id": "bridge",
                 "name": "Command Bridge",
-                "description": "The nerve center of the station. Large viewports look out into the void of space. Most displays are powered down.",
+                "description": "The command center. A distress beacon console dominates the center.",
                 "connected_to": [
-                    "engineering"
+                    "corridor"
                 ],
-                "objects": []
+                "objects": [
+                    "distress_console"
+                ]
             }
         ],
         "objects": [
-            {
-                "id": "locker",
-                "name": "Crew Locker",
-                "location_id": "cryo_bay",
-                "state": "closed",
-                "description": "A standard metal crew locker. The nameplate reads 'E. Vance'.",
-                "mechanics": "Standard mechanical latch. If state is 'closed' and 'locked' is false, it can be opened. If opened, allow the agent to find 'Personal Data Pad' and 'Multi-tool'.",
-                "internal_state": {
-                    "locked": false,
-                    "interactive": true,
-                    "container": true
-                }
-            },
             {
                 "id": "cryo_pod",
                 "name": "Cryo Pod",
                 "location_id": "cryo_bay",
                 "state": "open",
-                "description": "Your cryo-sleep pod. It is now open and inactive.",
-                "mechanics": "Inert machinery. Cannot be reactivated without Bridge authorization code. Currently serves only as a reminder of stasis.",
+                "description": "Your empty sleep pod.",
+                "mechanics": "Non-interactive.",
                 "internal_state": {
                     "fixed": true
                 }
             },
             {
-                "id": "maintenance_terminal",
-                "name": "Power Terminal",
-                "location_id": "corridor_alpha",
-                "state": "off",
-                "description": "A wall-mounted interface for monitoring power distribution.",
-                "mechanics": "Hardwired to Main Reactor. status='off' means no data is accessible. REQUIRES Main Reactor to be 'online' to power up. Once powered, it can display the ship's diagnostic map.",
+                "id": "dead_technician",
+                "name": "Dead Technician",
+                "location_id": "cryo_bay",
+                "state": "normal",
+                "description": "A crew member in a technician's uniform. He clutches something in his hand.",
+                "mechanics": "Can be searched. Contains 'Security Keycard'.",
                 "internal_state": {
                     "interactive": true,
-                    "fixed": true
-                }
-            },
-            {
-                "id": "supply_crate",
-                "name": "Secure Supply Crate",
-                "location_id": "storage_room",
-                "state": "closed",
-                "description": "A generic reinforced crate used for shipping parts.",
-                "mechanics": "Heavy-duty latch. Contains spare parts. Opening it reveals random mechanical scrap unless specific items are defined.",
-                "internal_state": {
-                    "interactive": true,
+                    "fixed": true,
                     "container": true
                 }
             },
             {
-                "id": "fuel_cell",
-                "name": "Heavy Fuel Cell",
-                "location_id": "storage_room",
-                "state": "charged",
-                "description": "A cylindrical power unit glowing with faint blue light. It looks heavy.",
-                "mechanics": "Standard Ion-Lithium Core (Class B). Heavy but portable. KEY ITEM: Must be inserted into the 'Main Reactor Core' in Engineering to restore station power.",
+                "id": "security_keycard",
+                "name": "Security Keycard",
+                "location_id": "dead_technician",
+                "state": "normal",
+                "description": "A blue keycard with 'Level 1 Access' printed on it.",
+                "mechanics": "Used to verify identity. Required to access certain locked areas or terminals.",
                 "internal_state": {
-                    "portable": true,
+                    "portable": true
+                }
+            },
+            {
+                "id": "log_terminal",
+                "name": "Log Terminal",
+                "location_id": "engineering",
+                "state": "on",
+                "description": "A glowing green screen displaying the last entry.",
+                "mechanics": "Read-only. Display reads: 'Locker code reset to 7734 due to memory error.'",
+                "internal_state": {
+                    "fixed": true,
                     "interactive": true
                 }
             },
             {
-                "id": "main_reactor",
-                "name": "Main Reactor Core",
+                "id": "secure_locker",
+                "name": "Secure Locker",
                 "location_id": "engineering",
-                "state": "offline",
-                "description": "The massive power core of the station. It has a slot for a Fuel Cell.",
-                "mechanics": "Primary power source. MECHANISM: If 'Heavy Fuel Cell' is inserted (transferred) into it, the Fuel Cell is consumed (destroyed), and the Reactor state changes to 'online'. This restores power to the Maintenance Terminal.",
+                "state": "locked",
+                "description": "A heavy metal locker with a keypad.",
+                "mechanics": "LOCKED. Requires 4-digit PIN code to open. If correct code (7734) is provided in interaction, state becomes 'open'. Contains 'Override Disk'.",
+                "internal_state": {
+                    "locked": true,
+                    "interactive": true,
+                    "container": true,
+                    "code": "7734"
+                }
+            },
+            {
+                "id": "override_disk",
+                "name": "Override Disk",
+                "location_id": "secure_locker",
+                "state": "normal",
+                "description": "A red data disk labeled 'EMERGENCY OVERRIDE'.",
+                "mechanics": "Key item for distress beacon.",
+                "internal_state": {
+                    "portable": true
+                }
+            },
+            {
+                "id": "distress_console",
+                "name": "Distress Beacon Console",
+                "location_id": "bridge",
+                "state": "locked_out",
+                "description": "Main communication array. Screen says 'SYSTEM LOCKED - INSERT OVERRIDE DISK'.",
+                "mechanics": "Needs 'Override Disk' inserted to function. If disk is used/inserted, state becomes 'online' and message sent.",
                 "internal_state": {
                     "fixed": true,
                     "interactive": true
@@ -139,12 +139,12 @@
     },
     "agents": [
         {
-            "name": "Dr_Elena_Vance",
-            "age": 34,
-            "occupation": "Chief System Engineer",
-            "personality": "Rational, meticulous, mildly claustrophobic, but driven by duty.",
-            "background": "Elena is a veteran engineer on the colony station 'Aegis VII'. She woke up early from cryo-sleep due to a critical power failure. She is the only one awake.",
-            "initial_goal": "Assess the station's status, restore power to the Main Reactor in Engineering using a Fuel Cell, and signal for rescue from the Bridge.",
+            "name": "Alice",
+            "age": 30,
+            "occupation": "Survivor",
+            "personality": "Determined, resourceful.",
+            "background": "Woke up alone. Needs to escape.",
+            "initial_goal": "Find a way to signal for rescue.",
             "initial_location": "cryo_bay"
         }
     ]

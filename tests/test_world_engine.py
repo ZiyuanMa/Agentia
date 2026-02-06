@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from pydantic import ValidationError
 from world_engine import WorldEngine
 from world import World
-from schemas import WorldObject, Location, ModifyStateAction, CreateObjectAction, TransferObjectAction
+from schemas import WorldObject, Location, UpdateObjectAction, CreateObjectAction, TransferObjectAction
 from utils import LLMClient
 
 
@@ -76,13 +76,12 @@ class TestWorldEngine:
         # Bob should be in witnesses
         assert "Bob" in context
 
-    def test_resolve_interaction_result_action(self, world_engine, mock_llm, world, location, target_object):
-        """Test resolving interaction with result action in JSON mode."""
+    def test_resolve_interaction_result(self, world_engine, mock_llm, world, location, target_object):
+        """Test resolving interaction with interaction_result in JSON mode."""
         json_response = json.dumps({
             "reasoning": "The object can be used safely.",
-            "decisions": [
-                {"action": "result", "success": True, "message": "You successfully used the object.", "reasoning": "It worked fine."}
-            ]
+            "result": {"success": True, "message": "You successfully used the object."},
+            "effects": []
         })
         mock_llm.chat_completion = MagicMock(return_value=MockMessage(json_response))
         
@@ -98,13 +97,13 @@ class TestWorldEngine:
         assert result["success"] is True
         assert "successfully used" in result["message"]
 
-    def test_resolve_interaction_modify_object_state(self, world_engine, mock_llm, world, location, target_object):
-        """Test ModifyState executes immediately without LockAgent."""
+    def test_resolve_interaction_update_object(self, world_engine, mock_llm, world, location, target_object):
+        """Test UpdateObject executes immediately without duration."""
         json_response = json.dumps({
             "reasoning": "The object will break from this action.",
-            "decisions": [
-                {"action": "modify_state", "object_id": "test_obj", "new_state": "broken"},
-                {"action": "result", "success": True, "message": "The object broke.", "reasoning": "It shattered."}
+            "result": {"success": True, "message": "The object broke."},
+            "effects": [
+                {"action": "update_object", "object_id": "test_obj", "state": "broken"}
             ]
         })
         mock_llm.chat_completion = MagicMock(return_value=MockMessage(json_response))
@@ -125,14 +124,13 @@ class TestWorldEngine:
         assert target_object.state == "broken"
         assert result["success"] is True
 
-    def test_resolve_interaction_with_lock_defers_effects(self, world_engine, mock_llm, world, location, target_object):
-        """Test that object effects are deferred when LockAgent is used."""
+    def test_resolve_interaction_with_duration_defers_effects(self, world_engine, mock_llm, world, location, target_object):
+        """Test that object effects are deferred when interaction_result has duration > 0."""
         json_response = json.dumps({
             "reasoning": "Repairing takes time.",
-            "decisions": [
-                {"action": "lock_agent", "agent_name": "Alice", "duration_minutes": 10, "description": "repairing", "completion_message": "Repair complete."},
-                {"action": "modify_state", "object_id": "test_obj", "new_state": "repaired"},
-                {"action": "result", "success": True, "message": "You started repairing.", "reasoning": "Began work."}
+            "result": {"success": True, "message": "Repair complete.", "duration": 10, "task_description": "repairing"},
+            "effects": [
+                {"action": "update_object", "object_id": "test_obj", "state": "repaired"}
             ]
         })
         mock_llm.chat_completion = MagicMock(return_value=MockMessage(json_response))
@@ -146,23 +144,29 @@ class TestWorldEngine:
             world=world
         )
         
-        # Object state should NOT change yet (deferred)
+        assert result["success"] is True
+        # Check auto-generated start message
+        assert "Started: repairing" in result["message"]
+        # Object state should NOT be changed yet (deferred)
         assert target_object.state == "normal"
         
-        # Agent should be locked
-        lock = world.agent_locks.get("Alice")
-        assert lock is not None
+        # Alice should be locked
+        lock = world.check_agent_lock("Alice")
+        assert lock["expired"] is False
         assert lock["reason"] == "repairing"
-        assert len(lock["pending_effects"]) == 1
+        # Access internal lock for pending_effects check
+        internal_lock = world.agent_locks.get("Alice")
+        assert len(internal_lock["pending_effects"]) == 1
+        assert internal_lock["completion_message"] == "Repair complete."
 
     def test_resolve_interaction_create_object(self, world_engine, mock_llm, world, location, target_object):
         """Test CreateObject action creates new object."""
         json_response = json.dumps({
             "reasoning": "Making coffee produces a coffee cup.",
-            "decisions": [
+            "result": {"success": True, "message": "You made coffee."},
+            "effects": [
                 {"action": "create_object", "object_id": "coffee_cup_1", "name": "Coffee Cup", 
-                 "location_id": "room_a", "state": "hot", "description": "A hot cup of coffee", "internal_state": {"consumable": True}},
-                {"action": "result", "success": True, "message": "You made coffee.", "reasoning": "Coffee ready."}
+                 "location_id": "room_a", "state": "hot", "description": "A hot cup of coffee", "internal_state": {"consumable": True}}
             ]
         })
         mock_llm.chat_completion = MagicMock(return_value=MockMessage(json_response))
@@ -190,9 +194,9 @@ class TestWorldEngine:
         
         json_response = json.dumps({
             "reasoning": "The object is consumed.",
-            "decisions": [
-                {"action": "destroy_object", "object_id": "temp_obj"},
-                {"action": "result", "success": True, "message": "Object consumed.", "reasoning": "Gone."}
+            "result": {"success": True, "message": "Object consumed."},
+            "effects": [
+                {"action": "destroy_object", "object_id": "temp_obj"}
             ]
         })
         mock_llm.chat_completion = MagicMock(return_value=MockMessage(json_response))
@@ -221,10 +225,8 @@ class TestWorldEngine:
         
         json_response = json.dumps({
             "reasoning": "This makes a loud noise.",
-            "decisions": [
-                # {"action": "broadcast", ...} - removed from schema, this test is likely invalid now
-                {"action": "result", "success": True, "message": "You made a noise.", "reasoning": "Bang!"}
-            ]
+            "result": {"success": True, "message": "You made a noise."},
+            "effects": []
         })
         mock_llm.chat_completion = MagicMock(return_value=MockMessage(json_response))
         
@@ -276,10 +278,10 @@ class TestWorldEngine:
 class TestToolValidation:
     """Test Pydantic validation for tool arguments."""
     
-    def test_invalid_modify_object_state(self):
-        """Test validation error for invalid ModifyStateAction args."""
+    def test_invalid_update_object(self):
+        """Test validation error for invalid UpdateObjectAction args."""
         with pytest.raises(ValidationError):
-            ModifyStateAction(object_id="test")  # Missing required fields
+            UpdateObjectAction()  # Missing required object_id
     
     def test_valid_create_object(self):
         """Test valid CreateObjectAction parsing."""

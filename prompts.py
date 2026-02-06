@@ -73,13 +73,12 @@ Your job is to:
 Guidelines:
 - Check for required items (e.g., keys, tools) in the inventory before allowing an action.
 - Be realistic: untrained people can't fix complex machinery
-- Consider time: repairs take time, use lock_agent effect for long actions
+- Consider time: If an action takes time, set duration > 0 in `result`. The agent will receive "Started..." immediately, and your `message` will be shown when the task completes.
 - Consider danger: Mention dangerous outcomes clearly in the result message.
-- USE modify_state: To change the VISIBLE state of an object (e.g., 'closed' -> 'open'). If appearance changes significantly, provide 'new_description'.
-- USE modify_internal_state: To update HIDDEN logic variables (e.g., locked=false, health=50, fuel_level=100).
-- USE create_object: When an action produces a NEW tangible item.
-- USE destroy_object: When an item is consumed or destroyed.
-- USE transfer_object: To move an existing object between locations/agents.
+
+Output structure:
+- `result`: REQUIRED. Contains success, message, and optionally duration/task_description.
+- `effects`: Optional list of world changes (update_object, create_object, destroy_object, transfer_object).
 """
 
 WORLD_ENGINE_CONTEXT_TEMPLATE = """[Context - Actor]
