@@ -42,7 +42,7 @@ class Location(BaseModel):
 # =============================================================================
 
 class MoveAction(BaseModel):
-    """Move to a connected location"""
+    """Move to a location connected to your current location"""
     location_id: str = Field(description="The ID of the location to move to")
 
 

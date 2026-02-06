@@ -329,7 +329,9 @@ class World:
                     result["success"] = True
                     result["message"] = f"Successfully moved to {target}."
                 else:
-                    result["message"] = f"Failed to move to {target}. It might not be connected or valid."
+                    connected = self.get_connected_locations(current_location_id)
+                    connected_str = ", ".join(connected) if connected else "None"
+                    result["message"] = f"Failed to move to '{target}'. It is not connected to your current location. Connected locations: {connected_str}"
             else:
                 result["message"] = "Move action requires a target."
 

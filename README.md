@@ -19,7 +19,7 @@ Agentia solves the "rigid action" and "limited interaction" problems of traditio
 
 ### SimAgent (The Residents)
 These are the autonomous entities living in the world. Their reasoning focuses on "What should I do to achieve my goal?"
-*   `MoveAction`: Travel to a connected location (e.g., from Hallway to Kitchen).
+*   `MoveAction`: Travel to a **connected** location (locations must be directly linked; you cannot teleport to unconnected areas).
 *   `TalkAction`: Speak to others in the same location (broadcasts message to local agents).
 *   `InteractAction`: Attempt to use/manipulate an object (e.g., "Use Coffee Machine", "Unlock Door").
 *   `WaitAction`: Idling or observing.
