@@ -68,10 +68,10 @@ def simple_world():
             {
                 "id": "test_object",
                 "name": "Test Object",
-                "location": "room_a",
+                "location_id": "room_a",
                 "state": "normal",
                 "description": "A test object",
-                "properties": ["portable", "interactive"]
+                "internal_state": {"portable": True, "interactive": True}
             }
         ]
     }

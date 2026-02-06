@@ -55,26 +55,14 @@ class World:
 
         # Load Objects
         for obj_data in config.get("objects", []):
-            # Load internal state
-            internal_st = obj_data.get("internal_state", {})
-            
-            # Legacy support: if 'properties' list exists, merge into internal_state as booleans
-            if "properties" in obj_data:
-                for prop in obj_data["properties"]:
-                    internal_st[prop] = True
-            
-            # Legacy support: if 'attributes' exists, merge into internal_state
-            if "attributes" in obj_data:
-                internal_st.update(obj_data["attributes"])
-
             obj = WorldObject(
                 id=obj_data["id"],
                 name=obj_data["name"],
-                location_id=obj_data.get("location_id") or obj_data.get("location"), # Support both keys
+                location_id=obj_data.get("location_id"),
                 state=obj_data.get("state", "normal"),
                 description=obj_data["description"],
-                mechanics=obj_data.get("mechanics") or obj_data.get("env_description", ""), # Support both keys
-                internal_state=internal_st
+                mechanics=obj_data.get("mechanics", ""),
+                internal_state=obj_data.get("internal_state", {})
             )
             self.objects[obj.id] = obj
 
@@ -120,9 +108,9 @@ class World:
         return False
         
     def get_connected_locations(self, location_id: str) -> List[str]:
-         if location_id in self.locations:
-             return self.locations[location_id].connected_to
-         return []
+        if location_id in self.locations:
+            return self.locations[location_id].connected_to
+        return []
 
     def get_agent_inventory(self, agent_name: str) -> List[str]:
         """Get list of object names held by an agent."""
@@ -187,7 +175,7 @@ class World:
         
         # --- REMOVE from Source ---
         if from_id and from_id in self.locations:
-             if object_id in self.locations[from_id].objects:
+            if object_id in self.locations[from_id].objects:
                 self.locations[from_id].objects.remove(object_id)
         
         # Note: If from_id is an Agent or Container, we don't need to update a list 
@@ -204,13 +192,13 @@ class World:
             self.logger.info(f"Transferred {obj.name} to location {to_id}")
             
         elif to_id in self.agent_locations: # It's an Agent
-             self.logger.info(f"Transferred {obj.name} to agent {to_id}")
+            self.logger.info(f"Transferred {obj.name} to agent {to_id}")
              
         elif to_id in self.objects: # It's a Container Object
-             self.logger.info(f"Transferred {obj.name} into container {to_id}")
+            self.logger.info(f"Transferred {obj.name} into container {to_id}")
              
         else:
-             self.logger.warning(f"Transferred {obj.name} to unknown ID {to_id} (assuming external/agent)")
+            self.logger.warning(f"Transferred {obj.name} to unknown ID {to_id} (assuming external/agent)")
         
         return True
 
@@ -281,7 +269,7 @@ class World:
         }
         
         if not loc:
-             return data
+            return data
         
         data["location_name"] = loc.name
         data["location_description"] = loc.description
@@ -338,7 +326,7 @@ class World:
                 else:
                     result["message"] = f"Failed to move to {target}. It might not be connected or valid."
             else:
-                 result["message"] = "Move action requires a target."
+                result["message"] = "Move action requires a target."
 
         elif action_type == "talk":
             if content:
@@ -362,6 +350,16 @@ class World:
             if target:
                 obj = self.get_object(target)
                 if obj:
+                    # Check if object is in current location or agent's inventory
+                    if obj.location_id != current_location_id and obj.location_id != agent_name:
+                        result["message"] = f"Object '{target}' is not in your current location."
+                        return result
+                    
+                    # Check if WorldEngine is available
+                    if not self.world_engine:
+                        result["message"] = "Cannot perform complex interactions without WorldEngine."
+                        return result
+                    
                     # Always use WorldEngine for richer interaction handling
                     action_desc = content or ""
                     loc = self.get_location(current_location_id)

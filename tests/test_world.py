@@ -30,10 +30,10 @@ class TestWorldObjectOperations:
                 {
                     "id": "test_object",
                     "name": "Test Object",
-                    "location": "room_a",
+                    "location_id": "room_a",
                     "state": "normal",
                     "description": "A test object",
-                    "properties": ["portable"]
+                    "internal_state": {"portable": True}
                 }
             ]
         }
@@ -105,7 +105,7 @@ class TestDeferredEffects:
                 {"id": "room", "name": "Room", "description": "A room", "connected_to": []}
             ],
             "objects": [
-                {"id": "machine", "name": "Machine", "location": "room", "state": "working", "description": "A machine"}
+                {"id": "machine", "name": "Machine", "location_id": "room", "state": "working", "description": "A machine"}
             ]
         }
         return World(config)

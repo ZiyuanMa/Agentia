@@ -39,10 +39,10 @@ class TestWorldEngine:
                 {
                     "id": "test_obj",
                     "name": "Test Object",
-                    "location": "room_a",
+                    "location_id": "room_a",
                     "state": "normal",
                     "description": "A test object",
-                    "properties": ["interactive"]
+                    "internal_state": {"interactive": True}
                 }
             ]
         }

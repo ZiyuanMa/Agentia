@@ -123,7 +123,7 @@ class TestSimAgent:
         })
         mock_llm.async_chat_completion = AsyncMock(return_value=MockMessage(json_response))
         
-        decision = await agent.decide(current_tick=1, world_context=world_context)
+        decision = await agent.decide(world_context=world_context)
         
         assert decision["action_type"] == "move"
         assert decision["target"] == "kitchen_01"
@@ -140,7 +140,7 @@ class TestSimAgent:
         })
         mock_llm.async_chat_completion = AsyncMock(return_value=MockMessage(json_response))
         
-        decision = await agent.decide(current_tick=1, world_context=world_context)
+        decision = await agent.decide(world_context=world_context)
         
         assert decision["action_type"] == "talk"
         assert decision["content"] == "Hello Alice!"
@@ -157,7 +157,7 @@ class TestSimAgent:
         })
         mock_llm.async_chat_completion = AsyncMock(return_value=MockMessage(json_response))
         
-        decision = await agent.decide(current_tick=1, world_context=world_context)
+        decision = await agent.decide(world_context=world_context)
         
         assert decision["action_type"] == "interact"
         assert decision["target"] == "coffee_machine"
@@ -173,7 +173,7 @@ class TestSimAgent:
         })
         mock_llm.async_chat_completion = AsyncMock(return_value=MockMessage(json_response))
         
-        decision = await agent.decide(current_tick=1, world_context=world_context)
+        decision = await agent.decide(world_context=world_context)
         
         assert decision["action_type"] == "wait"
         assert "observing" in decision["content"]
@@ -181,23 +181,26 @@ class TestSimAgent:
 
 
     @pytest.mark.asyncio
-    async def test_decide_when_busy(self, agent, mock_llm, world_context):
-        """Test agent returns wait when busy."""
-        agent.busy_until = 10  # Busy until tick 10
+    async def test_decide_empty_context(self, agent, mock_llm):
+        """Test agent handles minimal context gracefully."""
+        json_response = json.dumps({
+            "reasoning": "No context available, waiting.",
+            "action_type": "wait",
+            "action": {"reason": "no information"}
+        })
+        mock_llm.async_chat_completion = AsyncMock(return_value=MockMessage(json_response))
         
-        decision = await agent.decide(current_tick=5, world_context=world_context)
+        minimal_context = make_world_context()
+        decision = await agent.decide(world_context=minimal_context)
         
         assert decision["action_type"] == "wait"
-        assert "Busy" in decision["reasoning"]
-        # LLM should not be called
-        mock_llm.async_chat_completion.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_decide_llm_failure(self, agent, mock_llm, world_context):
         """Test graceful handling of LLM failure."""
         mock_llm.async_chat_completion = AsyncMock(return_value=None)
         
-        decision = await agent.decide(current_tick=1, world_context=world_context)
+        decision = await agent.decide(world_context=world_context)
         
         assert decision["action_type"] == "wait"
         assert "failed" in decision["reasoning"].lower()
@@ -207,7 +210,7 @@ class TestSimAgent:
         """Test handling of invalid JSON response."""
         mock_llm.async_chat_completion = AsyncMock(return_value=MockMessage("not valid json"))
         
-        decision = await agent.decide(current_tick=1, world_context=world_context)
+        decision = await agent.decide(world_context=world_context)
         
         assert decision["action_type"] == "wait"
         assert "error" in decision["reasoning"].lower() or "json" in decision["reasoning"].lower()
@@ -224,7 +227,7 @@ class TestSimAgent:
         markdown_response = f"```json\n{json_content}\n```"
         mock_llm.async_chat_completion = AsyncMock(return_value=MockMessage(markdown_response))
         
-        decision = await agent.decide(current_tick=1, world_context=world_context)
+        decision = await agent.decide(world_context=world_context)
         
         assert decision["action_type"] == "wait"
         assert "markdown" in decision["reasoning"].lower() or "testing" in decision["reasoning"].lower()
@@ -241,7 +244,7 @@ class TestSimAgent:
         
         assert len(agent.memory.chat_history) == 0
         
-        await agent.decide(current_tick=1, world_context=world_context)
+        await agent.decide(world_context=world_context)
         
         # Should have user message and assistant response
         assert len(agent.memory.chat_history) == 2

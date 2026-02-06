@@ -39,7 +39,6 @@ class SimAgent:
         self.personality = personality
         self.background = background
         self.current_goal = initial_goal
-        self.busy_until = 0
         self.memory = AgentMemory()
         self.llm = llm_client
         self.logger = logging.getLogger(f"Agentia.Agent.{self.name}")
@@ -56,12 +55,8 @@ class SimAgent:
             tick_duration=tick_duration
         )
 
-    async def decide(self, current_tick: int, world_context: Dict[str, Any]) -> Dict[str, Any]:
+    async def decide(self, world_context: Dict[str, Any]) -> Dict[str, Any]:
         """Async decision-making for the agent using JSON output."""
-        if current_tick < self.busy_until:
-            self.logger.info(f"{self.name} is busy.")
-            return {"action_type": "wait", "reasoning": "Busy executing previous action"}
-        
         system_prompt = self.get_system_prompt(TICK_DURATION_MINUTES)
         
         # Build user message using template

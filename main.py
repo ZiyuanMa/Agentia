@@ -84,7 +84,7 @@ async def game_loop(world: World, agents: list[SimAgent], ticks: int = 5):
         # 2. Concurrent decision making with asyncio.gather
         if active_agents:
             decisions = await asyncio.gather(*[
-                agent.decide(tick, ctx) 
+                agent.decide(ctx) 
                 for agent, ctx in zip(active_agents, contexts)
             ])
             
