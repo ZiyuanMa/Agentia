@@ -31,24 +31,21 @@ Core Directives:
 """
 
 
-AGENT_USER_TEMPLATE = """Time: {time}
+AGENT_USER_TEMPLATE = """Current Time: {time}
 
-Location: {location_name}
-Description: {location_description}
+Location: {location_name}:{location_description}
 
-People: {people}
-Objects:
+People Here: {people}
+Objects in Location:
 {objects}
 
 Connected Locations: {connections}
 
-Events:
+Recent Events:
 {events}
 
-Inventory: {inventory}
-Status: {status}
-
-Provide your decision in JSON format."""
+Your Inventory: {inventory}
+Your Status: {status}"""
 
 
 # -----------------------------------------------------------------------------
@@ -103,4 +100,3 @@ Witnesses: {witnesses}
 "{action_description}"
 
 Determine the outcome and respond in JSON format with 'reasoning' and a 'decisions' list."""
-

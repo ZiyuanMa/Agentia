@@ -68,11 +68,12 @@
                 "location_id": "cryo_bay",
                 "state": "normal",
                 "description": "A crew member in a technician's uniform. He clutches something in his hand.",
-                "mechanics": "Can be searched. Contains 'Security Keycard'.",
+                "mechanics": "Can be searched. Use transfer_object to move items from 'contents' to agent's inventory.",
                 "internal_state": {
                     "interactive": true,
                     "fixed": true,
-                    "container": true
+                    "container": true,
+                    "contents": ["security_keycard"]
                 }
             },
             {
@@ -104,12 +105,13 @@
                 "location_id": "engineering",
                 "state": "locked",
                 "description": "A heavy metal locker with a keypad.",
-                "mechanics": "LOCKED. Requires 4-digit PIN code to open. If correct code (7734) is provided in interaction, state becomes 'open'. Contains 'Override Disk'.",
+                "mechanics": "LOCKED. Requires 4-digit PIN code to open. If correct code (7734) is provided in interaction, state becomes 'open' and contents become accessible.",
                 "internal_state": {
                     "locked": true,
                     "interactive": true,
                     "container": true,
-                    "code": "7734"
+                    "code": "7734",
+                    "contents": ["override_disk"]
                 }
             },
             {

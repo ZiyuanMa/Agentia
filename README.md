@@ -1,6 +1,6 @@
 # Agentia: AI Micro-Society Simulator
 
-Agentia is a lightweight, highly extensible virtual society simulator driven by Large Language Models (LLMs). It interacts with the world through **Structured Action Output** (JSON Mode), allowing agents to physically change their environment reliably.
+Agentia is a lightweight, highly extensible virtual society simulator driven by Large Language Models (LLMs). Agents interact with the world through **Structured Action Output** (JSON Mode), allowing them to physically change their environment reliably.
 
 ## 🌟 Core Philosophy
 
@@ -26,12 +26,12 @@ These are the autonomous entities living in the world. Their reasoning focuses o
 
 ### WorldEngine (The Environment)
 This is the "Game Master" agent that resolves complex physics and causality when a SimAgent interacts with an object.
-*   `ModifyStateAction`: Change an object's state (e.g., "Coffee Machine" -> "Broken").
+*   `UpdateObjectAction`: Change an object's state (e.g., "Coffee Machine" -> "Broken").
 *   `CreateObjectAction`: Spawn new items (e.g., "Cup of Coffee").
-*   `DestroyObjectAction`: Remove items (e.g., "Cup of Coffee"Consumed).
+*   `DestroyObjectAction`: Remove items (e.g., "Cup of Coffee" consumed).
 *   `TransferObjectAction`: Move items between inventories or locations (e.g., Giving a key card).
-*   `LockAgentAction`: Freeze an agent for a duration to simulate time-consuming tasks (e.g., "Repairing Server - 30 mins").
-*   `BroadcastAction`: Announce events to a location (e.g., "Loud explosion heard from Server Room").
+
+Additionally, interactions can have **duration** (e.g., repairing takes 30 minutes), during which the agent is locked and cannot perform other actions.
 
 ## 🚀 Quick Start
 
@@ -76,7 +76,7 @@ Options:
 
 Example:
 ```bash
-python main.py --ticks 10 --scenario data/scenario_coffee_shop.json
+python main.py --ticks 10 --scenario data/scenario_deep_space.json
 ```
 
 ## 📂 Project Structure
@@ -86,7 +86,7 @@ agentia/
 ├── main.py              # Entry point: Game Loop & concurrency management
 ├── world.py             # World Model: Graph topology, object state, time
 ├── agent.py             # Agent Model: Decision logic, memory, prompting
-├── world_engine.py         # World Engine: "Game Master" logic
+├── world_engine.py      # World Engine: "Game Master" logic
 ├── schemas.py           # Pydantic Models: Defines all interactions & data
 ├── config.py            # Configuration & Constants
 ├── data/                # JSON definitions for worlds and agents
