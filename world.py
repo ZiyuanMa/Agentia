@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any
-from datetime import datetime, timedelta
+from datetime import timedelta
 import networkx as nx
 import logging
 import json
@@ -9,13 +9,11 @@ from schemas import WorldObject, Location
 from utils import LLMClient
 from world_engine import WorldEngine
 
-logger = logging.getLogger("Agentia.World")
-
 
 class World:
     """The simulation world containing locations, objects, and agents."""
     
-    def __init__(self, path_or_config, llm_client: LLMClient = None):
+    def __init__(self, path_or_config, llm_client: LLMClient = None) -> None:
         self.logger = logging.getLogger("Agentia.World")
         self.graph = nx.Graph()
         self.locations: Dict[str, Location] = {}
@@ -38,7 +36,7 @@ class World:
             
         self._load_from_config(config)
 
-    def _load_from_config(self, config: Dict):
+    def _load_from_config(self, config: Dict) -> None:
         # Load Locations
         for loc_data in config.get("locations", []):
             loc = Location(
@@ -86,7 +84,7 @@ class World:
     def get_object(self, object_id: str) -> Optional[WorldObject]:
         return self.objects.get(object_id)
 
-    def place_agent(self, agent_name: str, location_id: str):
+    def place_agent(self, agent_name: str, location_id: str) -> bool:
         """Place an agent in a location (used during initialization)."""
         loc = self.get_location(location_id)
         if loc:
@@ -241,7 +239,7 @@ class World:
         self.logger.info(f"Object {object_id} internal_state[{key}] = {value}")
         return True
 
-    def broadcast_to_location(self, location_id: str, message: str, exclude_agent: str = None):
+    def broadcast_to_location(self, location_id: str, message: str, exclude_agent: str = None) -> None:
         """
         Broadcast an event message to all agents in a location.
         The message will be added to each agent's pending events queue.
@@ -255,7 +253,7 @@ class World:
                 if agent_name not in self.pending_events:
                     self.pending_events[agent_name] = []
                 self.pending_events[agent_name].append(message)
-                logger.info(f"Event queued for {agent_name}: {message}")
+                self.logger.info(f"Event queued for {agent_name}: {message}")
 
     def get_pending_events(self, agent_name: str) -> List[str]:
         """
@@ -344,7 +342,7 @@ class World:
 
         elif action_type == "talk":
             if content:
-                logger.info(f"{agent_name} says: '{content}'")
+                self.logger.info(f"{agent_name} says: '{content}'")
                 # Broadcast to others in the same location
                 self.broadcast_to_location(
                     current_location_id,
@@ -401,7 +399,7 @@ class World:
             
         return result
 
-    def advance_time(self):
+    def advance_time(self) -> None:
         """Advance simulation time by one tick."""
         self.sim_time += timedelta(minutes=TICK_DURATION_MINUTES)
     
@@ -410,7 +408,7 @@ class World:
         return self.sim_time.strftime("%A, %I:%M %p")
 
     def set_agent_lock(self, agent_name: str, duration_minutes: int, reason: str, 
-                       completion_message: str = None, pending_effects: List[Dict] = None):
+                       completion_message: str = None, pending_effects: List[Dict] = None) -> None:
         """Set a lock on an agent for a duration with optional deferred effects."""
         until_time = self.sim_time + timedelta(minutes=duration_minutes)
         
@@ -420,7 +418,7 @@ class World:
             "completion_message": completion_message or f"Finished {reason}.",
             "pending_effects": pending_effects or []
         }
-        logger.info(f"Agent {agent_name} locked until {until_time.strftime('%I:%M %p')}: {reason}")
+        self.logger.info(f"Agent {agent_name} locked until {until_time.strftime('%I:%M %p')}: {reason}")
 
     def check_agent_lock(self, agent_name: str) -> Optional[Dict]:
         """Check if agent is locked. Returns lock info or None. Executes pending effects if lock expired."""

@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from pydantic import BaseModel, Field, ValidationError
 import logging
 import json
@@ -24,6 +24,7 @@ class AgentMemory(BaseModel):
 
 
 class SimAgent:
+    """A simulation agent capable of making decisions using LLM."""
     def __init__(self, 
                  name: str, 
                  age: int, 
@@ -58,8 +59,8 @@ class SimAgent:
     async def decide(self, current_tick: int, world_context: Dict[str, Any]) -> Dict[str, Any]:
         """Async decision-making for the agent using JSON output."""
         if current_tick < self.busy_until:
-             self.logger.info(f"{self.name} is busy.")
-             return {"action_type": "wait", "reasoning": "Busy executing previous action"}
+            self.logger.info(f"{self.name} is busy.")
+            return {"action_type": "wait", "reasoning": "Busy executing previous action"}
         
         system_prompt = self.get_system_prompt(TICK_DURATION_MINUTES)
         
@@ -122,7 +123,6 @@ class SimAgent:
             elif decision.action_type == "wait":
                 result["content"] = action_params.get("reason")
 
-            
             # Validate action params with typed model
             validated_action = decision.get_validated_action()
             if not validated_action:

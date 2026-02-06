@@ -159,7 +159,6 @@ WorldEngineAction = Union[
     ResultAction,
     ModifyStateAction,
     ModifyInternalStateAction,
-
     LockAgentAction,
     CreateObjectAction,
     DestroyObjectAction,

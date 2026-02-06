@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, TYPE_CHECKING, Union
+from typing import List, Dict, Any, TYPE_CHECKING
 from pydantic import BaseModel, ValidationError
 import logging
 import json
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 from utils import LLMClient
 
 
-def _record_world_engine_call():
+def _record_world_engine_call() -> None:
     """Record a WorldEngine call to stats if available."""
     try:
         from logger_config import get_stats
@@ -37,7 +37,7 @@ class WorldEngine:
     The World Engine (formerly EnvironmentAgent) acts as a Game Master, 
     resolving complex interactions using JSON output mode with a list of typed actions.
     """
-    def __init__(self, llm_client: LLMClient):
+    def __init__(self, llm_client: LLMClient) -> None:
         self.llm = llm_client
         self.logger = logging.getLogger("Agentia.WorldEngine")
     
@@ -177,7 +177,7 @@ class WorldEngine:
         
         return {"type": effect_type, "args": args}
     
-    def _execute_action(self, action_type: str, action: BaseModel, world: 'World', location: 'Location'):
+    def _execute_action(self, action_type: str, action: BaseModel, world: 'World', location: 'Location') -> None:
         """Execute a single action immediately."""
         self.logger.info(f"Executing action: {action_type}")
         

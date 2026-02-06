@@ -32,7 +32,6 @@ class ColorFormatter(logging.Formatter):
         log_fmt = self.GREY + self.FORMAT + self.RESET
         
         # Colorize based on logger name
-        # Colorize based on logger name
         if "Agent." in record.name and "WorldEngine" not in record.name:
             # Individual agents get unique colors based on name hash
             agent_name = record.name.split(".")[-1]

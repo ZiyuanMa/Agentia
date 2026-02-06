@@ -86,6 +86,7 @@ def test_agent(mock_llm):
         age=30,
         occupation="Tester",
         personality="Curious and methodical",
+        background="A test agent created for unit testing purposes.",
         llm_client=mock_llm,
         initial_goal="Test all the things"
     )
@@ -94,6 +95,3 @@ def test_agent(mock_llm):
 @pytest.fixture
 def world_engine(mock_llm):
     return WorldEngine(mock_llm)
-
-
-
