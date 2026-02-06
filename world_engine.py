@@ -34,8 +34,8 @@ def _record_world_engine_call() -> None:
 
 class WorldEngine:
     """
-    The World Engine (formerly EnvironmentAgent) acts as a Game Master, 
-    resolving complex interactions using JSON output mode with a list of typed actions.
+    The World Engine acts as a Game Master, resolving complex interactions
+    using JSON output mode with a list of typed actions.
     """
     def __init__(self, llm_client: LLMClient) -> None:
         self.llm = llm_client
