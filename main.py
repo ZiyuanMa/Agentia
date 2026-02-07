@@ -110,6 +110,20 @@ async def game_loop(world: World, agents: list[SimAgent], ticks: int = 5):
     summary = stats.get_summary()
     for line in summary.split('\n'):
         logger.info(line)
+    
+    # Log final agent conversation histories
+    logger.info("=" * 60)
+    logger.info("           AGENT CONVERSATION HISTORIES")
+    logger.info("=" * 60)
+    for agent in agents:
+        logger.info(f"\n>>> {agent.name}'s Full Context:")
+        logger.info(f"System: {agent.get_system_prompt(TICK_DURATION_MINUTES)}")
+        for msg in agent.memory.chat_history:
+            role = msg.get('role', 'unknown')
+            content = msg.get('content', '')
+            preview = content[:500] + "..." if len(content) > 500 else content
+            logger.info(f"{role}: {preview}")
+        logger.info("-" * 40)
 
 
 if __name__ == "__main__":

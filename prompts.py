@@ -41,8 +41,8 @@ Objects in Location:
 
 Connected Locations: {connections}
 
-Recent Events:
-{events}
+Recent Memory (what you remember from the last few minutes):
+{memory}
 
 Your Inventory: {inventory}
 Your Status: {status}"""

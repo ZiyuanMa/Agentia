@@ -239,14 +239,24 @@ class World:
         """
         loc = self.get_location(location_id)
         if not loc:
+            self.logger.warning(f"Broadcast failed: location {location_id} not found")
             return
         
+        if not loc.agents_present:
+            self.logger.info(f"Broadcast to {location_id}: no agents present")
+            return
+        
+        recipient_count = 0
         for agent_name in loc.agents_present:
             if agent_name != exclude_agent:
                 if agent_name not in self.pending_events:
                     self.pending_events[agent_name] = []
                 self.pending_events[agent_name].append(message)
                 self.logger.info(f"Event queued for {agent_name}: {message}")
+                recipient_count += 1
+        
+        if recipient_count == 0:
+            self.logger.info(f"Broadcast to {location_id}: only sender present, no recipients")
 
     def get_pending_events(self, agent_name: str) -> List[str]:
         """
@@ -298,10 +308,9 @@ class World:
         # Connected locations
         data["connections"] = ", ".join(loc.connected_to) if loc.connected_to else "None"
         
-        # Recent events
+        # Recent external events (from other agents)
         pending_events = self.get_pending_events(agent_name)
-        if pending_events:
-            data["events"] = "\n".join([f"- {event}" for event in pending_events])
+        data["pending_events"] = pending_events  # Return raw list for agent to merge
             
         # Agent Inventory
         inventory_items = self.get_agent_inventory(agent_name)

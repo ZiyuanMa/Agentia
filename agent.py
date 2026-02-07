@@ -59,9 +59,23 @@ class SimAgent:
         """Async decision-making for the agent using JSON output."""
         system_prompt = self.get_system_prompt(TICK_DURATION_MINUTES)
         
+        # Merge own short-term memory with external events from world
+        own_memories_str = self.memory.get_recent_memories(limit=3)
+        own_memories = own_memories_str.split("\n") if own_memories_str else []
+        external_events = world_context.get("pending_events", [])
+        
+        # Combine: external events first, then own memories
+        all_memories = []
+        if external_events:
+            all_memories.extend([f"[Event] {e}" for e in external_events])
+        all_memories.extend([f"[Memory] {m}" for m in own_memories if m])
+        
+        memory_str = "\n".join(f"- {m}" for m in all_memories) if all_memories else "Nothing notable"
+        
         # Build user message using template
         new_user_message = AGENT_USER_TEMPLATE.format(
             status=self.status,
+            memory=memory_str,
             **world_context
         )
         
