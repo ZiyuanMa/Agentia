@@ -82,8 +82,7 @@ class WorldEngine:
             interaction = decision.result
             result["success"] = interaction.success
             result["message"] = interaction.message
-            msg_preview = (interaction.message or "")[:100]
-            self.logger.info(f"WorldEngine result: success={interaction.success}, duration={interaction.duration}min, message={msg_preview}...")
+            self.logger.info(f"WorldEngine result: success={interaction.success}, duration={interaction.duration}min, message={interaction.message}")
             
             # Collect effects
             pending_effects = []
@@ -116,7 +115,7 @@ class WorldEngine:
         except (ValidationError, json.JSONDecodeError) as e:
             self.logger.error(f"WorldEngine Parse Error: {e}")
             # Try to extract message from raw content
-            result["message"] = f"Action completed. {content[:100]}"
+            result["message"] = f"Action completed. {content}"
             result["success"] = True
         
         return result

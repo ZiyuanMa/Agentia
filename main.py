@@ -71,7 +71,7 @@ async def game_loop(world: World, agents: list[SimAgent], ticks: int = 5):
                 if lock_status.get("expired"):
                     agent.update_state({"success": True, "message": lock_status["message"]})
                     logger.info(f"{agent.name} finished: {lock_status['message']}")
-                    stats.record_event("lock_expired", f"{agent.name}: {lock_status['message'][:30]}")
+                    stats.record_event("lock_expired", f"{agent.name}: {lock_status['message']}")
                 else:
                     logger.info(f"{agent.name} is busy: {lock_status['reason']}")
                     continue
@@ -121,8 +121,7 @@ async def game_loop(world: World, agents: list[SimAgent], ticks: int = 5):
         for msg in agent.memory.chat_history:
             role = msg.get('role', 'unknown')
             content = msg.get('content', '')
-            preview = content[:500] + "..." if len(content) > 500 else content
-            logger.info(f"{role}: {preview}")
+            logger.info(f"{role}: {content}")
         logger.info("-" * 40)
 
 

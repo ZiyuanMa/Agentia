@@ -59,10 +59,9 @@ class SimAgent:
         """Async decision-making for the agent using JSON output."""
         system_prompt = self.get_system_prompt(TICK_DURATION_MINUTES)
         
-        # Merge own short-term memory with external events from world
-        own_memories_str = self.memory.get_recent_memories(limit=3)
-        own_memories = own_memories_str.split("\n") if own_memories_str else []
+        # Get new memories since last decision (external events + own actions)
         external_events = world_context.get("pending_events", [])
+        own_memories = self.memory.short_term.copy()
         
         # Combine: external events first, then own memories
         all_memories = []
@@ -71,6 +70,9 @@ class SimAgent:
         all_memories.extend([f"[Memory] {m}" for m in own_memories if m])
         
         memory_str = "\n".join(f"- {m}" for m in all_memories) if all_memories else "Nothing notable"
+        
+        # Clear short-term memory after using it (next time will only have new memories)
+        self.memory.short_term.clear()
         
         # Build user message using template
         new_user_message = AGENT_USER_TEMPLATE.format(
@@ -139,25 +141,25 @@ class SimAgent:
 
         except ValidationError as e:
             self.logger.error(f"Validation Error: {e}")
-            result["reasoning"] = f"Validation Error: {str(e)[:100]}"
+            result["reasoning"] = f"Validation Error: {str(e)}"
         except json.JSONDecodeError as e:
             self.logger.error(f"JSON Parse Error: {e}")
-            result["reasoning"] = f"JSON Error: {content[:100]}..."
+            result["reasoning"] = f"JSON Error: {content}"
 
         # Build detailed action log with parameters
         action_details = f"{result['action_type']}"
         if result.get("target"):
             action_details += f"(target={result['target']}"
             if result.get("content"):
-                content_preview = result['content'][:50] if len(str(result.get('content', ''))) > 50 else result.get('content', '')
+                content_preview = result.get('content', '')
                 action_details += f", content={content_preview}"
             action_details += ")"
         elif result.get("content"):
-            content_preview = result['content'][:50] if len(str(result.get('content', ''))) > 50 else result.get('content', '')
+            content_preview = result.get('content', '')
             action_details += f"(content={content_preview})"
         
         self.logger.info(f"{self.name} decided: {action_details}")
-        self.logger.info(f"{self.name} reasoning: {result['reasoning']}...")
+        self.logger.info(f"{self.name} reasoning: {result['reasoning']}")
         
         # Save both user context and assistant response to history
         self.memory.add_message("user", new_user_message)

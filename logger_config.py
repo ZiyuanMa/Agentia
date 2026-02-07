@@ -150,7 +150,7 @@ class SimulationStats:
             lines.append("")
             lines.append("  --- Notable Events ---")
             for event in self.events[-10:]:  # Show last 10 events
-                lines.append(f"    [Tick {event['tick']}] {event['type']}: {event['details'][:50]}")
+                lines.append(f"    [Tick {event['tick']}] {event['type']}: {event['details']}")
         
         lines.append("=" * 60)
         lines.append("")
