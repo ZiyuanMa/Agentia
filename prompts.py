@@ -99,4 +99,4 @@ Witnesses: {witnesses}
 [Action Intent]
 "{action_description}"
 
-Determine the outcome and respond in JSON format with 'reasoning' and a 'decisions' list."""
+Determine the outcome and respond in strict JSON format based on the comprehensive schema provided in your system instructions."""
