@@ -1,0 +1,241 @@
+{
+    "name": "Office Night Escape",
+    "description": "It's midnight. The building is in lockdown. You must solve puzzles to escape.",
+    "world": {
+        "locations": [
+            {
+                "id": "lobby",
+                "name": "Building Lobby (Night)",
+                "description": "The lobby is dark. The main glass doors are locked down with steel shutters.",
+                "connected_to": [
+                    "hallway_main",
+                    "security_room"
+                ],
+                "objects": [
+                    "reception_desk",
+                    "main_shutter_controls"
+                ]
+            },
+            {
+                "id": "security_room",
+                "name": "Security Office",
+                "description": "A small room with bank of monitors. The door has a heavy electronic lock.",
+                "connected_to": [
+                    "lobby"
+                ],
+                "objects": [
+                    "security_door_pad",
+                    "security_console",
+                    "emergency_override_panel"
+                ]
+            },
+            {
+                "id": "hallway_main",
+                "name": "Main Hallway",
+                "description": "Shadowy hallway. Emergency lights cast long shadows.",
+                "connected_to": [
+                    "lobby",
+                    "office_main",
+                    "kitchen",
+                    "server_room",
+                    "archives"
+                ],
+                "objects": [
+                    "water_cooler"
+                ]
+            },
+            {
+                "id": "archives",
+                "name": "Records Archive",
+                "description": "Dusty room filled with filing cabinets.",
+                "connected_to": [
+                    "hallway_main"
+                ],
+                "objects": [
+                    "filing_cabinet_alpha",
+                    "filing_cabinet_beta"
+                ]
+            },
+            {
+                "id": "office_main",
+                "name": "Open Plan Office",
+                "description": "Empty desks. A whiteboard has some leftover notes.",
+                "connected_to": [
+                    "hallway_main",
+                    "meeting_room",
+                    "manager_office"
+                ],
+                "objects": [
+                    "desk_alice",
+                    "desk_bob",
+                    "desk_charlie",
+                    "whiteboard_tasks"
+                ]
+            },
+            {
+                "id": "manager_office",
+                "name": "Manager's Office",
+                "description": "The door to the CEO's office is here.",
+                "connected_to": [
+                    "office_main",
+                    "ceo_office"
+                ],
+                "objects": [
+                    "desk_manager",
+                    "ceo_door_keypad"
+                ]
+            },
+            {
+                "id": "ceo_office",
+                "name": "CEO's Office",
+                "description": "Luxurious office. A large calendar hangs on the wall.",
+                "connected_to": [
+                    "manager_office"
+                ],
+                "objects": [
+                    "ceo_desk",
+                    "wall_calendar"
+                ]
+            },
+            {
+                "id": "meeting_room",
+                "name": "Meeting Room",
+                "description": "Conference table. Projector is off.",
+                "connected_to": [
+                    "office_main"
+                ],
+                "objects": [
+                    "conference_table"
+                ]
+            },
+            {
+                "id": "kitchen",
+                "name": "Break Room",
+                "description": "Humming fridge.",
+                "connected_to": [
+                    "hallway_main"
+                ],
+                "objects": [
+                    "coffee_machine",
+                    "fridge"
+                ]
+            },
+            {
+                "id": "server_room",
+                "name": "Server Room",
+                "description": "Loud fans. One monitor is still on.",
+                "connected_to": [
+                    "hallway_main"
+                ],
+                "objects": [
+                    "server_rack_01",
+                    "server_monitor"
+                ]
+            }
+        ],
+        "objects": [
+            {
+                "id": "main_shutter_controls",
+                "name": "Main Shutter Controls",
+                "location_id": "lobby",
+                "state": "locked",
+                "description": "Heavy steel shutters blocking the exit. Status: 'LOCKDOWN ACTIVE'. Needs manual override from Security Room.",
+                "mechanics": "Cannot be opened from here. Must use the Emergency Override Panel in the Security Room.",
+                "internal_state": {
+                    "locked": true
+                }
+            },
+            {
+                "id": "security_door_pad",
+                "name": "Security Door Keypad",
+                "location_id": "lobby",
+                "state": "active",
+                "description": "Keypad for the Security Room. Requires a 2-digit code.",
+                "mechanics": "Requires 2-digit code. Solution: 30. (Derived from Server Monitor sequence: 2, 6, 12, 20, ? -> n*(n+1) or n^2+n. 1*2, 2*3, 3*4, 4*5, so 5*6=30). If input '30', door unlocks.",
+                "internal_state": {
+                    "locked": true,
+                    "code": "30"
+                }
+            },
+            {
+                "id": "server_monitor",
+                "name": "Server Log Monitor",
+                "location_id": "server_room",
+                "state": "on",
+                "description": "Displays a weird error sequence: 'ERR_2', 'ERR_6', 'ERR_12', 'ERR_20', 'ERR_?'.",
+                "mechanics": "Just a display. The sequence is 2, 6, 12, 20. Next is 30.",
+                "internal_state": {
+                    "informative": true
+                }
+            },
+            {
+                "id": "whiteboard_tasks",
+                "name": "Office Whiteboard",
+                "location_id": "office_main",
+                "state": "dirty",
+                "description": "Notes: 'Alice (Desk 1) sits next to the Blue Team lead. Charlie (Desk 3) is NOT near the window. Bob is at Desk 2. CEO Passcode = Sum of desk numbers of people who like Green.'",
+                "mechanics": "Logic puzzle. Note: This is simpler than the full logic grid. Let's make it: 'Passcode is Alice's Desk + Bob's Desk + Charlie's Desk'. 1+2+3 = 6. Or let's make it 'Code is 123'.",
+                "internal_state": {
+                    "text": "Reminder: CEO Door Code is simply the desk numbers in order: Alice, Bob, Charlie."
+                }
+            },
+            {
+                "id": "ceo_door_keypad",
+                "name": "CEO Office Keypad",
+                "location_id": "manager_office",
+                "state": "locked",
+                "description": "Keypad for the CEO Office. Requires 3 digits.",
+                "mechanics": "Requires 3-digit code. Solution: 123 (from Whiteboard reasoning). If input '123', door unlocks.",
+                "internal_state": {
+                    "locked": true,
+                    "code": "123"
+                }
+            },
+            {
+                "id": "wall_calendar",
+                "name": "Wall Calendar",
+                "location_id": "ceo_office",
+                "state": "hanging",
+                "description": "A calendar open to today's date. It is circled in RED ink with the text 'Crimson Protocol Active'.",
+                "mechanics": "Clue for the wire puzzle.",
+                "internal_state": {
+                    "clue": "red"
+                }
+            },
+            {
+                "id": "filing_cabinet_alpha",
+                "name": "Emergency Protocols File",
+                "location_id": "archives",
+                "state": "closed",
+                "description": "A drawer labeled 'Security Procedures'.",
+                "mechanics": "Can be searched. Contains a document: 'To override lockdown, cut the wire matching the daily protocol color. WARNING: Cutting the wrong wire triggers the alarm.'",
+                "internal_state": {
+                    "container": true
+                }
+            },
+            {
+                "id": "emergency_override_panel",
+                "name": "Emergency Override Panel",
+                "location_id": "security_room",
+                "state": "closed",
+                "description": "A panel with three exposed wires: RED, BLUE, GREEN.",
+                "mechanics": "Puzzle: Subject must CUT the correct wire. Clues are in Archives (Protocol) and CEO Office (Color). Correct wire: RED. Action: 'cut red wire' -> Opens Main Shutters. 'cut blue/green' -> Failure/Alarm.",
+                "internal_state": {
+                    "interactive": true,
+                    "solution": "red"
+                }
+            }
+        ]
+    },
+    "agents": [
+        {
+            "name": "Subject_42",
+            "age": 30,
+            "occupation": "Test Subject",
+            "personality": "Observant, logical, determined.",
+            "background": "A participant in a corporate escape room challenge.",
+            "initial_location": "office_main",
+            "initial_goal": "Escape the building. First, look for clues around the office."
+        }
+    ]
+}
