@@ -101,11 +101,10 @@ class InteractionResult(BaseModel):
     The outcome of an interaction - immediate or time-delayed.
     If duration > 0, the agent is locked and effects are deferred until completion.
     """
-    success: bool
     message: str = Field(description="Result message. Shown immediately if duration=0, or after completion if duration>0.")
     
     # Time cost (optional - for actions that take time)
-    duration: int = Field(0, description="Duration in minutes. If > 0, agent is locked.")
+    duration: int = Field(0, description="Action duration in minutes. If > 0, agent is locked.")
     task_description: Optional[str] = Field(None, description="Description of the ongoing task (e.g. 'repairing')")
 
 
@@ -155,10 +154,9 @@ WorldEffect = Union[
 
 class WorldEngineDecision(BaseModel):
     """
-    The complete output format for WorldEngine's decision.
+    The complete output format for WorldEngine's decision via tool call.
     Separates the interaction result from world effects for clarity.
     """
-    reasoning: str = Field(description="Step-by-step analysis of the situation and physics")
     result: InteractionResult = Field(description="The outcome of the interaction")
     effects: List[WorldEffect] = Field(default_factory=list, description="Optional list of world state changes")
 

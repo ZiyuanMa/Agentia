@@ -173,7 +173,5 @@ class SimAgent:
             self.memory.short_term.append(f"System: {action_result['message']}")
             self.logger.info(f"{self.name} memory updated: {action_result['message']}")
         
-        # Update stress based on action success
-        if not action_result.get("success", True):
-            self.status["stress"] = "medium"
+
 

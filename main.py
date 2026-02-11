@@ -5,14 +5,12 @@ from world import World
 from agent import SimAgent
 from utils import LLMClient
 import json
-from config import TICK_DURATION_MINUTES
 from logger_config import setup_logging, get_stats
+from config import TICK_DURATION_MINUTES, DEFAULT_SCENARIO_PATH
 
 # Configure Logging
 setup_logging()
 logger = logging.getLogger("Agentia.Main")
-
-DEFAULT_SCENARIO_PATH = "data/scenario_office.json"
 
 
 def load_scenario(scenario_path: str):
@@ -129,7 +127,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Agentia - AI Agent Simulation")
     parser.add_argument("--scenario", "-s", type=str, default=DEFAULT_SCENARIO_PATH,
                         help=f"Path to scenario JSON file (default: {DEFAULT_SCENARIO_PATH})")
-    parser.add_argument("--ticks", "-t", type=int, default=5,
+    parser.add_argument("--ticks", "-t", type=int, default=15,
                         help="Number of simulation ticks to run (default: 5)")
     parser.add_argument("--no-log-file", action="store_true",
                         help="Disable file logging")

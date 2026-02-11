@@ -28,6 +28,4 @@ DEFAULT_AGENT_STATUS = {"fatigue": "low", "stress": "low"}
 # File Paths
 # =============================================================================
 
-DEFAULT_WORLD_PATH = "data/world.json"
-DEFAULT_AGENTS_PATH = "data/agents.json"
-
+DEFAULT_SCENARIO_PATH = "data/scenario_office_escape.json"

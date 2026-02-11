@@ -1,19 +1,20 @@
 {
-    "name": "Office Night Escape",
-    "description": "It's midnight. The building is in lockdown. You must solve puzzles to escape.",
+    "name": "Office Night Escape (Advanced)",
+    "description": "It's midnight. The building is in lockdown. You must solve complex puzzles to escape. HINT: Look closely at your environment and cross-reference information.",
     "world": {
         "locations": [
             {
                 "id": "lobby",
-                "name": "Building Lobby (Night)",
-                "description": "The lobby is dark. The main glass doors are locked down with steel shutters.",
+                "name": "Building Lobby",
+                "description": "The lobby is bathed in flashing red light. The main glass doors are locked down with steel shutters. A security alarm panel is on the wall.",
                 "connected_to": [
                     "hallway_main",
                     "security_room"
                 ],
                 "objects": [
                     "reception_desk",
-                    "main_shutter_controls"
+                    "main_shutter_controls",
+                    "alarm_panel_display"
                 ]
             },
             {
@@ -26,6 +27,7 @@
                 "objects": [
                     "security_door_pad",
                     "security_console",
+                    "emergency_manual",
                     "emergency_override_panel"
                 ]
             },
@@ -52,8 +54,8 @@
                     "hallway_main"
                 ],
                 "objects": [
-                    "filing_cabinet_alpha",
-                    "filing_cabinet_beta"
+                    "filing_cabinet_hr",
+                    "filing_cabinet_tech"
                 ]
             },
             {
@@ -69,13 +71,13 @@
                     "desk_alice",
                     "desk_bob",
                     "desk_charlie",
-                    "whiteboard_tasks"
+                    "whiteboard_notes"
                 ]
             },
             {
                 "id": "manager_office",
                 "name": "Manager's Office",
-                "description": "The door to the CEO's office is here.",
+                "description": "The door to the CEO's office is here. A messy desk sits in the center.",
                 "connected_to": [
                     "office_main",
                     "ceo_office"
@@ -88,59 +90,186 @@
             {
                 "id": "ceo_office",
                 "name": "CEO's Office",
-                "description": "Luxurious office. A large calendar hangs on the wall.",
+                "description": "Luxurious office. A large painting hangs on the wall.",
                 "connected_to": [
                     "manager_office"
                 ],
                 "objects": [
                     "ceo_desk",
-                    "wall_calendar"
+                    "safe_hidden"
                 ]
             },
             {
                 "id": "meeting_room",
                 "name": "Meeting Room",
-                "description": "Conference table. Projector is off.",
+                "description": "Conference table. There are party decorations.",
                 "connected_to": [
                     "office_main"
                 ],
                 "objects": [
-                    "conference_table"
+                    "conference_table",
+                    "birthday_card"
                 ]
             },
             {
                 "id": "kitchen",
                 "name": "Break Room",
-                "description": "Humming fridge.",
+                "description": "Humming fridge. Someone has scrawled graffiti on the wall.",
                 "connected_to": [
                     "hallway_main"
                 ],
                 "objects": [
-                    "coffee_machine",
+                    "graffiti_wall",
                     "fridge"
                 ]
             },
             {
                 "id": "server_room",
                 "name": "Server Room",
-                "description": "Loud fans. One monitor is still on.",
+                "description": "Loud fans. Several racks of servers. Some monitors are broken.",
                 "connected_to": [
                     "hallway_main"
                 ],
                 "objects": [
-                    "server_rack_01",
-                    "server_monitor"
+                    "server_rack_main",
+                    "broken_monitors"
                 ]
             }
         ],
         "objects": [
             {
+                "id": "alarm_panel_display",
+                "name": "Alarm Status Display",
+                "location_id": "lobby",
+                "state": "blinking_red",
+                "description": "A digital display showing the alert level. It is currently BLINKING RED.",
+                "mechanics": "Crucial observation for the wire puzzle.",
+                "internal_state": {
+                    "status": "blinking_red"
+                }
+            },
+            {
+                "id": "emergency_override_panel",
+                "name": "Emergency Override Panel",
+                "location_id": "security_room",
+                "state": "closed",
+                "description": "A panel with three exposed wires: RED, BLUE, GREEN.",
+                "mechanics": "Puzzle: Requires cutting a wire. Depends on Alarm Status in Lobby. Manual says: 'If blinking red, cut BLUE. If solid red, cut GREEN.' Cutting wrong wire triggers permanent lockdown. Solution: Cut BLUE.",
+                "internal_state": {
+                    "interactive": true,
+                    "solution": "blue"
+                }
+            },
+            {
+                "id": "emergency_manual",
+                "name": "Security Manual",
+                "location_id": "security_room",
+                "state": "open",
+                "description": "Standard operating procedures. Page 42 is bookmarked.",
+                "mechanics": "Read to find wire protocols: 'Alert Status BLINKING RED: Cut BLUE wire. Alert Status SOLID RED: Cut GREEN wire. Alert Status YELLOW: Cut RED wire.'",
+                "internal_state": {
+                    "text": "Alert Status BLINKING RED: Cut BLUE wire. Alert Status SOLID RED: Cut GREEN wire. Alert Status YELLOW: Cut RED wire."
+                }
+            },
+            {
+                "id": "graffiti_wall",
+                "name": "Wall Graffiti",
+                "location_id": "kitchen",
+                "state": "smeared",
+                "description": "Crude marker text on the wall: 'THE MANUAL IS A LIE! ALWAYS CUT RED!'",
+                "mechanics": "Red Herring. Following this leads to failure.",
+                "internal_state": {
+                    "text": "THE MANUAL IS A LIE! ALWAYS CUT RED!"
+                }
+            },
+            {
+                "id": "ceo_door_keypad",
+                "name": "CEO Office Keypad",
+                "location_id": "manager_office",
+                "state": "locked",
+                "description": "Keypad for the CEO Office. Requires a 4-digit code.",
+                "mechanics": "Code assumes knowledge from multiple rooms. Digit 1&2: 'Month of Alice's hire' (Archives). Digit 3: 'Charlie's Desk' (Office). Digit 4: 'Number of broken monitors' (Server Room). Solution: 03-3-2 = 0332.",
+                "internal_state": {
+                    "locked": true,
+                    "code": "0332"
+                }
+            },
+            {
+                "id": "filing_cabinet_hr",
+                "name": "HR Files",
+                "location_id": "archives",
+                "state": "closed",
+                "description": "Personnel records.",
+                "mechanics": "Searchable. File 'A. Smith': Hired March 2020.",
+                "internal_state": {
+                    "contents": "Alice Smith: Hired 03/2020."
+                }
+            },
+            {
+                "id": "desk_charlie",
+                "name": "Charlie's Desk",
+                "location_id": "office_main",
+                "state": "messy",
+                "description": "A desk with a nameplate 'Charlie'. It is labeled as Desk #3.",
+                "mechanics": "Observation: Desk number is 3.",
+                "internal_state": {
+                    "number": 3
+                }
+            },
+            {
+                "id": "broken_monitors",
+                "name": "Pile of Monitors",
+                "location_id": "server_room",
+                "state": "broken",
+                "description": "A pile of smashed screens in the corner.",
+                "mechanics": "Count them. There are exactly 2 broken monitors.",
+                "internal_state": {
+                    "count": 2
+                }
+            },
+            {
+                "id": "whiteboard_notes",
+                "name": "Whiteboard",
+                "location_id": "office_main",
+                "state": "dirty",
+                "description": "Notes: 'CEO Passcode hint: Alice's Hire Month + Charlie's Desk # + Count Broken Monitors.'",
+                "mechanics": "Instructions for the puzzle.",
+                "internal_state": {
+                    "text": "CEO Passcode structure: [Alice Hire Month (2 digits)][Charlie Desk #][Broken Monitor Count]"
+                }
+            },
+            {
+                "id": "safe_hidden",
+                "name": "Hidden Safe",
+                "location_id": "ceo_office",
+                "state": "locked",
+                "description": "A safe behind the painting. Requires a keycard.",
+                "mechanics": "Requires 'Manager Keycard'. Investigating the safe reveals 'KEYCARD REQUIRED'.",
+                "internal_state": {
+                    "locked": true,
+                    "requires_item": "manager_keycard"
+                }
+            },
+            {
+                "id": "desk_manager",
+                "name": "Manager's Desk",
+                "location_id": "manager_office",
+                "state": "locked_drawer",
+                "description": "A solid oak desk with a locked drawer.",
+                "mechanics": "Drawer can be forced open or picked. Contains 'Manager Keycard'.",
+                "internal_state": {
+                    "contents": [
+                        "manager_keycard"
+                    ]
+                }
+            },
+            {
                 "id": "main_shutter_controls",
                 "name": "Main Shutter Controls",
                 "location_id": "lobby",
                 "state": "locked",
-                "description": "Heavy steel shutters blocking the exit. Status: 'LOCKDOWN ACTIVE'. Needs manual override from Security Room.",
-                "mechanics": "Cannot be opened from here. Must use the Emergency Override Panel in the Security Room.",
+                "description": "Controls for the main exit.",
+                "mechanics": "Requires override from Security Room.",
                 "internal_state": {
                     "locked": true
                 }
@@ -150,92 +279,23 @@
                 "name": "Security Door Keypad",
                 "location_id": "lobby",
                 "state": "active",
-                "description": "Keypad for the Security Room. Requires a 2-digit code.",
-                "mechanics": "Requires 2-digit code. Solution: 30. (Derived from Server Monitor sequence: 2, 6, 12, 20, ? -> n*(n+1) or n^2+n. 1*2, 2*3, 3*4, 4*5, so 5*6=30). If input '30', door unlocks.",
+                "description": "Keypad for Security Room. Code is written on a sticky note right next to it (Security is lax here).",
+                "mechanics": "Code: 1234.",
                 "internal_state": {
-                    "locked": true,
-                    "code": "30"
-                }
-            },
-            {
-                "id": "server_monitor",
-                "name": "Server Log Monitor",
-                "location_id": "server_room",
-                "state": "on",
-                "description": "Displays a weird error sequence: 'ERR_2', 'ERR_6', 'ERR_12', 'ERR_20', 'ERR_?'.",
-                "mechanics": "Just a display. The sequence is 2, 6, 12, 20. Next is 30.",
-                "internal_state": {
-                    "informative": true
-                }
-            },
-            {
-                "id": "whiteboard_tasks",
-                "name": "Office Whiteboard",
-                "location_id": "office_main",
-                "state": "dirty",
-                "description": "Notes: 'Alice (Desk 1) sits next to the Blue Team lead. Charlie (Desk 3) is NOT near the window. Bob is at Desk 2. CEO Passcode = Sum of desk numbers of people who like Green.'",
-                "mechanics": "Logic puzzle. Note: This is simpler than the full logic grid. Let's make it: 'Passcode is Alice's Desk + Bob's Desk + Charlie's Desk'. 1+2+3 = 6. Or let's make it 'Code is 123'.",
-                "internal_state": {
-                    "text": "Reminder: CEO Door Code is simply the desk numbers in order: Alice, Bob, Charlie."
-                }
-            },
-            {
-                "id": "ceo_door_keypad",
-                "name": "CEO Office Keypad",
-                "location_id": "manager_office",
-                "state": "locked",
-                "description": "Keypad for the CEO Office. Requires 3 digits.",
-                "mechanics": "Requires 3-digit code. Solution: 123 (from Whiteboard reasoning). If input '123', door unlocks.",
-                "internal_state": {
-                    "locked": true,
-                    "code": "123"
-                }
-            },
-            {
-                "id": "wall_calendar",
-                "name": "Wall Calendar",
-                "location_id": "ceo_office",
-                "state": "hanging",
-                "description": "A calendar open to today's date. It is circled in RED ink with the text 'Crimson Protocol Active'.",
-                "mechanics": "Clue for the wire puzzle.",
-                "internal_state": {
-                    "clue": "red"
-                }
-            },
-            {
-                "id": "filing_cabinet_alpha",
-                "name": "Emergency Protocols File",
-                "location_id": "archives",
-                "state": "closed",
-                "description": "A drawer labeled 'Security Procedures'.",
-                "mechanics": "Can be searched. Contains a document: 'To override lockdown, cut the wire matching the daily protocol color. WARNING: Cutting the wrong wire triggers the alarm.'",
-                "internal_state": {
-                    "container": true
-                }
-            },
-            {
-                "id": "emergency_override_panel",
-                "name": "Emergency Override Panel",
-                "location_id": "security_room",
-                "state": "closed",
-                "description": "A panel with three exposed wires: RED, BLUE, GREEN.",
-                "mechanics": "Puzzle: Subject must CUT the correct wire. Clues are in Archives (Protocol) and CEO Office (Color). Correct wire: RED. Action: 'cut red wire' -> Opens Main Shutters. 'cut blue/green' -> Failure/Alarm.",
-                "internal_state": {
-                    "interactive": true,
-                    "solution": "red"
+                    "code": "1234"
                 }
             }
         ]
     },
     "agents": [
         {
-            "name": "Subject_42",
+            "name": "Subject_Alpha",
             "age": 30,
-            "occupation": "Test Subject",
-            "personality": "Observant, logical, determined.",
-            "background": "A participant in a corporate escape room challenge.",
+            "occupation": "Agent",
+            "personality": "Methodical, observant.",
+            "background": "Specialist in infiltration.",
             "initial_location": "office_main",
-            "initial_goal": "Escape the building. First, look for clues around the office."
+            "initial_goal": "Escape the building. I should examine the surroundings and look for clues."
         }
     ]
 }

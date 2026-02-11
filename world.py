@@ -393,10 +393,9 @@ class World:
                         world=self,
                         inventory=current_inventory
                     )
-
                     
-                    # Auto-broadcast successful interactions to others in the room
-                    if result.get("success") and loc:
+                    # Auto-broadcast interactions to others in the room
+                    if result.get("message") and loc:
                         broadcast_msg = f"{agent_name}: {result.get('message')}"
                         self.broadcast_to_location(
                             current_location_id,
