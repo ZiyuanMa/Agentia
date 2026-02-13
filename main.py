@@ -94,8 +94,7 @@ async def game_loop(world: World, agents: list[SimAgent], ticks: int = 5):
         for agent in agents:
             decision = agent_decisions.get(agent.name)
             if decision:
-                action_type = decision.get("action_type", "unknown")
-                stats.record_action(agent.name, action_type)
+                stats.record_action(agent.name, decision.action_type)
                 
                 result = world.process_action(agent.name, decision)
                 agent.update_state(result)

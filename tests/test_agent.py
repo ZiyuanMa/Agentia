@@ -125,9 +125,10 @@ class TestSimAgent:
         
         decision = await agent.decide(world_context=world_context)
         
-        assert decision["action_type"] == "move"
-        assert decision["target"] == "kitchen_01"
-        assert "kitchen" in decision["reasoning"].lower() or "coffee" in decision["reasoning"].lower()
+        assert decision.action_type == "move"
+        action = decision.get_validated_action()
+        assert action.location_id == "kitchen_01"
+        assert "kitchen" in decision.reasoning.lower() or "coffee" in decision.reasoning.lower()
 
     @pytest.mark.asyncio
     async def test_decide_talk_action(self, agent, mock_llm):
@@ -142,9 +143,10 @@ class TestSimAgent:
         
         decision = await agent.decide(world_context=world_context)
         
-        assert decision["action_type"] == "talk"
-        assert decision["content"] == "Hello Alice!"
-        assert decision["target"] == "Alice"
+        assert decision.action_type == "talk"
+        action = decision.get_validated_action()
+        assert action.message == "Hello Alice!"
+        assert action.target_agent == "Alice"
 
     @pytest.mark.asyncio
     async def test_decide_interact_action(self, agent, mock_llm):
@@ -159,9 +161,10 @@ class TestSimAgent:
         
         decision = await agent.decide(world_context=world_context)
         
-        assert decision["action_type"] == "interact"
-        assert decision["target"] == "coffee_machine"
-        assert decision["content"] == "make coffee"
+        assert decision.action_type == "interact"
+        action = decision.get_validated_action()
+        assert action.object_id == "coffee_machine"
+        assert action.action == "make coffee"
 
     @pytest.mark.asyncio
     async def test_decide_wait_action(self, agent, mock_llm, world_context):
@@ -175,8 +178,9 @@ class TestSimAgent:
         
         decision = await agent.decide(world_context=world_context)
         
-        assert decision["action_type"] == "wait"
-        assert "observing" in decision["content"]
+        assert decision.action_type == "wait"
+        action = decision.get_validated_action()
+        assert "observing" in action.reason
 
 
 
@@ -193,7 +197,7 @@ class TestSimAgent:
         minimal_context = make_world_context()
         decision = await agent.decide(world_context=minimal_context)
         
-        assert decision["action_type"] == "wait"
+        assert decision.action_type == "wait"
 
     @pytest.mark.asyncio
     async def test_decide_llm_failure(self, agent, mock_llm, world_context):
@@ -202,8 +206,8 @@ class TestSimAgent:
         
         decision = await agent.decide(world_context=world_context)
         
-        assert decision["action_type"] == "wait"
-        assert "failed" in decision["reasoning"].lower()
+        assert decision.action_type == "wait"
+        assert "failed" in decision.reasoning.lower()
 
     @pytest.mark.asyncio
     async def test_decide_invalid_json(self, agent, mock_llm, world_context):
@@ -212,8 +216,8 @@ class TestSimAgent:
         
         decision = await agent.decide(world_context=world_context)
         
-        assert decision["action_type"] == "wait"
-        assert "error" in decision["reasoning"].lower() or "json" in decision["reasoning"].lower()
+        assert decision.action_type == "wait"
+        assert "error" in decision.reasoning.lower() or "json" in decision.reasoning.lower()
 
     @pytest.mark.asyncio
     async def test_decide_markdown_code_block_stripped(self, agent, mock_llm, world_context):
@@ -229,8 +233,8 @@ class TestSimAgent:
         
         decision = await agent.decide(world_context=world_context)
         
-        assert decision["action_type"] == "wait"
-        assert "markdown" in decision["reasoning"].lower() or "testing" in decision["reasoning"].lower()
+        assert decision.action_type == "wait"
+        assert "markdown" in decision.reasoning.lower() or "testing" in decision.reasoning.lower()
 
     @pytest.mark.asyncio
     async def test_chat_history_updated(self, agent, mock_llm, world_context):

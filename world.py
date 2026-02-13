@@ -319,97 +319,105 @@ class World:
         return data
 
 
-    def process_action(self, agent_name: str, decision: Dict[str, Any]) -> Dict[str, Any]:
+    def process_action(self, agent_name: str, decision: 'AgentDecision') -> Dict[str, Any]:
         """
         Executes an agent's decision against the world state.
         Returns a result dictionary with success status and message.
         """
-        action_type = decision.get("action_type")
-        target = decision.get("target")
-        content = decision.get("content")
-        current_location_id = self.get_agent_location(agent_name)
-        
-        result = {"success": False, "message": ""}
-        
-        if action_type == "move":
-            if target:
-                success = self.move_agent(agent_name, target)
-                if success:
-                    result["success"] = True
-                    result["message"] = f"Successfully moved to {target}."
-                else:
-                    connected = self.get_connected_locations(current_location_id)
-                    connected_str = ", ".join(connected) if connected else "None"
-                    result["message"] = f"Failed to move to '{target}'. It is not connected to your current location. Connected locations: {connected_str}"
-            else:
-                result["message"] = "Move action requires a target."
+        handlers = {
+            "move": self._handle_move,
+            "talk": self._handle_talk,
+            "wait": self._handle_wait,
+            "interact": self._handle_interact,
+        }
+        handler = handlers.get(decision.action_type)
+        if not handler:
+            return {"success": False, "message": f"Unknown action type: {decision.action_type}"}
+        return handler(agent_name, decision)
 
-        elif action_type == "talk":
-            if content:
-                self.logger.info(f"{agent_name} says: '{content}'")
-                # Broadcast to others in the same location
-                self.broadcast_to_location(
-                    current_location_id,
-                    f"You heard {agent_name} say: '{content}'",
-                    exclude_agent=agent_name
-                )
-                result["success"] = True
-                result["message"] = f"You said: '{content}'"
-            else:
-                result["message"] = "Talk action requires content."
-                
-        elif action_type == "wait":
-            result["success"] = True
-            result["message"] = "Waited for one tick."
+    def _handle_move(self, agent_name: str, decision: 'AgentDecision') -> Dict[str, Any]:
+        """Handle move action."""
+        action = decision.get_validated_action()
+        target = action.location_id
+        current_location_id = self.get_agent_location(agent_name)
+
+        if not target:
+            return {"success": False, "message": "Move action requires a target."}
+
+        success = self.move_agent(agent_name, target)
+        if success:
+            return {"success": True, "message": f"Successfully moved to {target}."}
         
-        elif action_type == "interact":
-            if target:
-                obj = self.get_object(target)
-                if obj:
-                    # Check if object is in current location or agent's inventory
-                    if obj.location_id != current_location_id and obj.location_id != agent_name:
-                        result["message"] = f"Object '{target}' is not in your current location."
-                        return result
-                    
-                    # Check if WorldEngine is available
-                    if not self.world_engine:
-                        result["message"] = "Cannot perform complex interactions without WorldEngine."
-                        return result
-                    
-                    # Always use WorldEngine for richer interaction handling
-                    action_desc = content or ""
-                    loc = self.get_location(current_location_id)
-                    witnesses = loc.agents_present if loc else []
-                    
-                    # Fetch inventory internally for WorldEngine
-                    current_inventory = self.get_agent_inventory(agent_name)
-                    
-                    result = self.world_engine.resolve_interaction(
-                        agent_name=agent_name,
-                        target_object=obj,
-                        action_description=action_desc,
-                        location=loc,
-                        witnesses=witnesses,
-                        world=self,
-                        inventory=current_inventory
-                    )
-                    
-                    # Auto-broadcast interactions to others in the room
-                    if result.get("message") and loc:
-                        broadcast_msg = f"{agent_name}: {result.get('message')}"
-                        self.broadcast_to_location(
-                            current_location_id,
-                            broadcast_msg,
-                            exclude_agent=agent_name # The actor already knows the result
-                        )
-                else:
-                    result["message"] = f"Object '{target}' not found."
-            else:
-                result["message"] = "Interact action requires a target object."
-            
-        else:
-            result["message"] = f"Unknown action type: {action_type}"
-            
+        connected = self.get_connected_locations(current_location_id)
+        connected_str = ", ".join(connected) if connected else "None"
+        return {"success": False, "message": f"Failed to move to '{target}'. It is not connected to your current location. Connected locations: {connected_str}"}
+
+    def _handle_talk(self, agent_name: str, decision: 'AgentDecision') -> Dict[str, Any]:
+        """Handle talk action."""
+        action = decision.get_validated_action()
+        message = action.message
+        current_location_id = self.get_agent_location(agent_name)
+
+        if not message:
+            return {"success": False, "message": "Talk action requires content."}
+
+        self.logger.info(f"{agent_name} says: '{message}'")
+        self.broadcast_to_location(
+            current_location_id,
+            f"You heard {agent_name} say: '{message}'",
+            exclude_agent=agent_name
+        )
+        return {"success": True, "message": f"You said: '{message}'"}
+
+    def _handle_wait(self, agent_name: str, decision: 'AgentDecision') -> Dict[str, Any]:
+        """Handle wait action."""
+        return {"success": True, "message": "Waited for one tick."}
+
+    def _handle_interact(self, agent_name: str, decision: 'AgentDecision') -> Dict[str, Any]:
+        """Handle interact action via WorldEngine."""
+        action = decision.get_validated_action()
+        target = action.object_id
+        action_desc = action.action
+        current_location_id = self.get_agent_location(agent_name)
+
+        if not target:
+            return {"success": False, "message": "Interact action requires a target object."}
+
+        obj = self.get_object(target)
+        if not obj:
+            return {"success": False, "message": f"Object '{target}' not found."}
+
+        # Check if object is in current location or agent's inventory
+        if obj.location_id != current_location_id and obj.location_id != agent_name:
+            return {"success": False, "message": f"Object '{target}' is not in your current location."}
+
+        # Check if WorldEngine is available
+        if not self.world_engine:
+            return {"success": False, "message": "Cannot perform complex interactions without WorldEngine."}
+
+        loc = self.get_location(current_location_id)
+        witnesses = loc.agents_present if loc else []
+        current_inventory = self.get_agent_inventory(agent_name)
+
+        result = self.world_engine.resolve_interaction(
+            agent_name=agent_name,
+            target_object=obj,
+            action_description=action_desc or "",
+            location=loc,
+            witnesses=witnesses,
+            world=self,
+            inventory=current_inventory
+        )
+
+        # Auto-broadcast interactions to others in the room
+        if result.get("message") and loc:
+            broadcast_msg = f"{agent_name}: {result.get('message')}"
+            self.broadcast_to_location(
+                current_location_id,
+                broadcast_msg,
+                exclude_agent=agent_name
+            )
+
         return result
 
     def advance_time(self) -> None:
@@ -442,17 +450,22 @@ class World:
         if self.sim_time >= lock["until_time"]:
             # Lock expired - execute pending effects
             for effect in lock.get("pending_effects", []):
-                self._execute_pending_effect(effect)
+                self.execute_effect(effect)
             
             del self.agent_locks[agent_name]
             return {"expired": True, "message": lock["completion_message"]}
         
         return {"expired": False, "reason": lock["reason"]}
 
-    def _execute_pending_effect(self, effect: Dict):
-        """Execute a deferred effect when an agent lock expires."""
+    def execute_effect(self, effect: Dict) -> None:
+        """Execute a world effect from a standardized dict format.
+        
+        This is the single entry point for applying effects, used by both
+        WorldEngine (immediate effects) and deferred effects (agent locks).
+        """
         effect_type = effect.get("type")
         args = effect.get("args", {})
+        self.logger.info(f"Executing effect: {effect_type}")
         
         if effect_type == "CreateObject":
             self.create_object(**args)
@@ -462,5 +475,7 @@ class World:
             self.transfer_object(**args)
         elif effect_type == "UpdateObject":
             self.update_object(**args)
+        else:
+            self.logger.warning(f"Unknown effect type: {effect_type}")
 
 

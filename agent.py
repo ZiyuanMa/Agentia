@@ -1,10 +1,10 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field, ValidationError
 import logging
 import json
 from utils import LLMClient
 from config import TICK_DURATION_MINUTES, DEFAULT_AGENT_STATUS
-from schemas import AgentDecision
+from schemas import AgentDecision, WaitAction
 from prompts import AGENT_SYSTEM_PROMPT, AGENT_USER_TEMPLATE
 
 
@@ -55,8 +55,8 @@ class SimAgent:
             tick_duration=tick_duration
         )
 
-    async def decide(self, world_context: Dict[str, Any]) -> Dict[str, Any]:
-        """Async decision-making for the agent using JSON output."""
+    async def decide(self, world_context: Dict[str, Any]) -> AgentDecision:
+        """Async decision-making for the agent. Returns a typed AgentDecision."""
         system_prompt = self.get_system_prompt(TICK_DURATION_MINUTES)
         
         # Get new memories since last decision (external events + own actions)
@@ -97,81 +97,38 @@ class SimAgent:
         
         if not response or not response.content:
             self.logger.error(f"{self.name} failed to decide (empty response).")
-            return {"action_type": "wait", "reasoning": "Decision failed"}
+            return AgentDecision.fallback("Decision failed - empty LLM response")
         
         # Strip markdown code blocks if present
         content = response.content.strip()
         if content.startswith("```"):
             lines = content.split("\n")
-            # Remove first line (```json) and last line (```)
             lines = [l for l in lines[1:] if not l.strip().startswith("```")]
             content = "\n".join(lines)
 
-        result = {"action_type": "wait", "reasoning": "Parsing failed", "target": None, "content": None}
-        
         try:
-            # Use AgentDecision for unified parsing and validation
             decision = AgentDecision.model_validate_json(content)
-            
-            result["reasoning"] = decision.reasoning
-            result["action_type"] = decision.action_type
-            
-            # Helper to handle action params whether it's a dict or Pydantic model
-            if isinstance(decision.action, BaseModel):
-                action_params = decision.action.model_dump()
-            else:
-                action_params = decision.action
-            
-            # Extract common fields based on action type
-            if decision.action_type == "move":
-                result["target"] = action_params.get("location_id")
-            elif decision.action_type == "talk":
-                result["content"] = action_params.get("message")
-                result["target"] = action_params.get("target_agent")
-            elif decision.action_type == "interact":
-                result["target"] = action_params.get("object_id")
-                result["content"] = action_params.get("action")
-            elif decision.action_type == "wait":
-                result["content"] = action_params.get("reason")
-
-            # Validate action params with typed model
-            validated_action = decision.get_validated_action()
-            if not validated_action:
-                self.logger.warning(f"Could not validate action params for {decision.action_type}")
-
+            # Validate action params match action_type
+            decision.get_validated_action()
         except ValidationError as e:
             self.logger.error(f"Validation Error: {e}")
-            result["reasoning"] = f"Validation Error: {str(e)}"
+            decision = AgentDecision.fallback(f"Validation Error: {str(e)}")
         except json.JSONDecodeError as e:
             self.logger.error(f"JSON Parse Error: {e}")
-            result["reasoning"] = f"JSON Error: {content}"
+            decision = AgentDecision.fallback(f"JSON Error: {content}")
 
-        # Build detailed action log with parameters
-        action_details = f"{result['action_type']}"
-        if result.get("target"):
-            action_details += f"(target={result['target']}"
-            if result.get("content"):
-                content_preview = result.get('content', '')
-                action_details += f", content={content_preview}"
-            action_details += ")"
-        elif result.get("content"):
-            content_preview = result.get('content', '')
-            action_details += f"(content={content_preview})"
-        
-        self.logger.info(f"{self.name} decided: {action_details}")
-        self.logger.info(f"{self.name} reasoning: {result['reasoning']}")
+        # Log decision
+        self.logger.info(f"{self.name} decided: {decision.action_type} | {decision.action}")
+        self.logger.info(f"{self.name} reasoning: {decision.reasoning}")
         
         # Save both user context and assistant response to history
         self.memory.add_message("user", new_user_message)
         self.memory.add_message("assistant", content)
         
-        return result
+        return decision
 
     def update_state(self, action_result: Dict[str, Any]) -> None:
         """Update agent's state and memory based on action result."""
         if "message" in action_result:
             self.memory.short_term.append(f"System: {action_result['message']}")
             self.logger.info(f"{self.name} memory updated: {action_result['message']}")
-        
-
-

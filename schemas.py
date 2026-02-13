@@ -92,6 +92,15 @@ class AgentDecision(BaseModel):
             return model(**self.action)
         return self.action
 
+    @staticmethod
+    def fallback(reasoning: str = "Parsing failed") -> "AgentDecision":
+        """Create a default wait action for error/fallback scenarios."""
+        return AgentDecision(
+            reasoning=reasoning,
+            action_type="wait",
+            action=WaitAction(reason="fallback")
+        )
+
 # =============================================================================
 # WorldEngine Action Models
 # =============================================================================

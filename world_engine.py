@@ -283,24 +283,10 @@ class WorldEngine:
         else:
             # Apply immediately
             for effect in pending_effects:
-                self._execute_effect_dict(effect, world)
+                world.execute_effect(effect)
                 
         return output
 
-    def _execute_effect_dict(self, effect: Dict, world: 'World') -> None:
-        """Execute effect immediately from dict."""
-        etype = effect["type"]
-        args = effect["args"]
-        self.logger.info(f"Executing effect: {etype}")
-        
-        if etype == "UpdateObject":
-            world.update_object(**args)
-        elif etype == "CreateObject":
-            world.create_object(**args)
-        elif etype == "DestroyObject":
-            world.destroy_object(args.get("object_id"))
-        elif etype == "TransferObject":
-            world.transfer_object(**args)
 
     def _build_context(self, agent_name: str, target_object: WorldObject,
                        action_description: str, location: Location,
