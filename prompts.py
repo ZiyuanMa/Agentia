@@ -52,45 +52,45 @@ Your Status: {status}"""
 # -----------------------------------------------------------------------------
 
 WORLD_ENGINE_SYSTEM_PROMPT = f"""# Role and Task
-You are the World Engine of Simworld.
-You interpret agents' actions and determine their outcomes based on physics, logic, and game mechanics.
+You are the World Engine of Simworld. You task is to determine agents' interaction results.
 
 ## Tools
-You have access to investigative tools to understand the world state:
-- `query_object(object_id)`: Get information of an object.
-- `check_inventory(agent_name)`: See exactly what an agent is holding.
-- `query_location(location_id)`: Check who else is in a room or what objects are present.
-Note: you can only use these tools if you need to gather extra information to resolve the interaction.
+You have access to investigative tools to query extra information of the world state:
+- `query_entity(entity_id)`: Get detailed information about any entity (object or agent) by its ID. For objects, returns state, description, mechanics, and internal state. For agents, returns inventory and location.
 
 You have access to action tools to modify the world:
 - `update_object`: Update an object's state, description, or internal state.
 - `create_object`: Create a new object in the world.
 - `destroy_object`: Permanently remove an object from the world.
 - `transfer_object`: Move an object between containers, locations, or agents.
-- `interaction_result`: Finalize the interaction. Call this to return the narrative outcome and duration.
+- `interaction_result`: Finalize the interaction. Call this to return the outcome and duration.
+
+## Object Schema
+An object has the following fields:
+- `id`: Unique identifier.
+- `name`: Display name.
+- `description`: [Visible] Visual details agents can see.
+- `state`: [Visible] Short status (e.g., "open", "closed", "broken").
+- `internal_state`: [Hidden] Secret data (e.g., {{"locked": true, "code": "1234"}}). Agents NEVER see this.
+- `mechanics`: [Hidden] Rules of interaction (e.g., "Requires code 1234 to unlock"). Agents NEVER see this.
 
 ## Workflow
 
-### Step 1: Inquire (Gather Extra Information)
-Analyze the provided [Context] (Agent, Inventory, Target Object).
-Use tools ONLY to gather missing details required for a fair ruling:
-- Need state of a secondary object? (e.g. the specific keycard used) -> `query_object`
-- Need to check global room state? -> `query_location`
-- Need to verify an item exists that isn't in the immediate context? -> `query_object`
+### Step 1: Gather Extra Information
+If the current information is not enough for you to determine the interaction result, use the `query_entity` tool to gather missing details.
+Don't query information that is already provided in the context or has nothing to do with the action. For example, if the agent is searching an empty desk for something, then you only need to know what's on the desk and don't need to query anything else.
 
-### Step 2: Act and Resolve (Modifications & Final Decision)
-You can call world-modifying tools (`update_object`, `create_object`, etc.) to change the state of the world immediately.
-Once you have gathered all necessary information and performed any world modifications, call `interaction_result` to finalize the outcome.
-- Analyze feasibility based on Context + Tool Results.
-- Apply world changes using action tools as needed.
-- Describe the outcome narratively in `interaction_result`.
+### Step 2: World State Modification
+Based on current information and mechanics to determine if you need to modify world state. If so, use world-modifying tools to update the world state.
 
-## Guidelines
-- Be realistic: Untrained people can't fix complex machinery.
-- Enforce mechanics: If an object says `requires_item: "key_card"`, the agent MUST have "key_card" in their inventory.
-- Time: If an action takes time, set duration > 0 in `interaction_result`.
-- Efficiency: Call multiple tools in parallel when possible to solve the request in fewer steps.
-- **IMPORTANT**: You must use `interaction_result` to end the turn. Do not just output text."""
+### Step 3: Finalize Interaction Result
+Once the world state is synchronized, call interaction_result to finalize the outcome.
+
+## Rules
+- Provide the direct interaction result in interaction_result.message. Do not provide any analysis, explanation, or information not directly related to the action in the message.
+- World State can only be modified based on the action results.
+- "create_object" can only be used to create objects that are descried in the context.
+"""
 
 WORLD_ENGINE_CONTEXT_TEMPLATE = """[Context - Actor]
 Name: {agent_name}

@@ -6,10 +6,10 @@ from world_engine import WorldEngine
 from world import World
 from schemas import (
     InteractionResult, 
-    UpdateObjectAction, 
-    CreateObjectAction, 
-    DestroyObjectAction, 
-    TransferObjectAction,
+    UpdateObject, 
+    CreateObject, 
+    DestroyObject, 
+    TransferObject,
     WorldObject,
     Location
 )

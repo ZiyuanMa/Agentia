@@ -3,8 +3,8 @@ Agentia Schema Definitions
 
 All Pydantic models for the simulation are centralized here:
 - World models (WorldObject, Location)
-- Agent action models (MoveAction, TalkAction, etc.)
-- WorldEngine action models (ResultAction, ModifyStateAction, etc.)
+- Agent action models (Move, Talk, etc.)
+- WorldEngine action models (UpdateObject, CreateObject, etc.)
 - Decision models (AgentDecision, WorldEngineDecision)
 """
 import json
@@ -41,24 +41,24 @@ class Location(BaseModel):
 # SimAgent Action Models
 # =============================================================================
 
-class MoveAction(BaseModel):
+class Move(BaseModel):
     """Move to a location connected to your current location"""
     location_id: str = Field(description="The ID of the location to move to")
 
 
-class TalkAction(BaseModel):
+class Talk(BaseModel):
     """Say something to people in the same location"""
     message: str = Field(description="What you want to say")
     target_agent: Optional[str] = Field(None, description="Specific agent to address")
 
 
-class InteractAction(BaseModel):
+class Interact(BaseModel):
     """Interact with an object in the current location"""
     object_id: str = Field(description="The ID of the object to interact with")
     action: str = Field(description="The detailed description of interaction")
 
 
-class WaitAction(BaseModel):
+class Wait(BaseModel):
     """Wait and observe the surroundings"""
     reason: str = Field(default="observing", description="Why you are waiting")
 
@@ -72,7 +72,7 @@ class AgentDecision(BaseModel):
     action_type: Literal["move", "talk", "interact", "wait"] = Field(
         description="The type of action to take"
     )
-    action: Union[MoveAction, TalkAction, InteractAction, WaitAction] = Field(
+    action: Union[Move, Talk, Interact, Wait] = Field(
         description="Action parameters object"
     )
 
@@ -82,10 +82,10 @@ class AgentDecision(BaseModel):
             return self.action
         
         action_map = {
-            "move": MoveAction,
-            "talk": TalkAction,
-            "interact": InteractAction,
-            "wait": WaitAction,
+            "move": Move,
+            "talk": Talk,
+            "interact": Interact,
+            "wait": Wait,
         }
         model = action_map.get(self.action_type)
         if model and isinstance(self.action, dict):
@@ -98,8 +98,17 @@ class AgentDecision(BaseModel):
         return AgentDecision(
             reasoning=reasoning,
             action_type="wait",
-            action=WaitAction(reason="fallback")
+            action=Wait(reason="fallback")
         )
+
+# =============================================================================
+# WorldEngine Inquiry Models
+# =============================================================================
+
+class QueryEntityParams(BaseModel):
+    """Parameters for querying any entity (object or agent) in the world."""
+    entity_id: str = Field(description="The ID of the entity to query (object ID or agent name)")
+
 
 # =============================================================================
 # WorldEngine Action Models
@@ -114,21 +123,19 @@ class InteractionResult(BaseModel):
     
     # Time cost (optional - for actions that take time)
     duration: int = Field(0, description="Action duration in minutes. If > 0, agent is locked.")
-    task_description: Optional[str] = Field(None, description="Description of the ongoing task (e.g. 'repairing')")
+    task_description: Optional[str] = Field(default=None, description="Description of the ongoing task if duration > 0 (e.g. 'repairing')")
 
 
-class UpdateObjectAction(BaseModel):
+class UpdateObject(BaseModel):
     """Update any field(s) of an object. Only provided fields will be updated."""
-    action: Literal["update_object"] = "update_object"
     object_id: str
     state: Optional[str] = Field(None, description="New visible state (e.g. 'open', 'broken', 'active')")
     description: Optional[str] = Field(None, description="New visible description")
     internal_state: Optional[dict] = Field(None, description="Updates to internal state (merged with existing)")
 
 
-class CreateObjectAction(BaseModel):
+class CreateObject(BaseModel):
     """Create a new object in the world."""
-    action: Literal["create_object"] = "create_object"
     object_id: str
     name: str
     location_id: str
@@ -138,15 +145,13 @@ class CreateObjectAction(BaseModel):
     internal_state: dict = Field(default_factory=dict)
 
 
-class DestroyObjectAction(BaseModel):
+class DestroyObject(BaseModel):
     """Remove an object from the world."""
-    action: Literal["destroy_object"] = "destroy_object"
     object_id: str
 
 
-class TransferObjectAction(BaseModel):
+class TransferObject(BaseModel):
     """Transfer an object from one container/location/agent to another."""
-    action: Literal["transfer_object"] = "transfer_object"
     object_id: str
     from_id: str = Field(description="Source ID (Room ID, Agent ID, or Container ID)")
     to_id: str = Field(description="Destination ID (Room ID, Agent ID, or Container ID)")
@@ -154,21 +159,11 @@ class TransferObjectAction(BaseModel):
 
 # Union of world effect actions (changes to the world state)
 WorldEffect = Union[
-    UpdateObjectAction,
-    CreateObjectAction,
-    DestroyObjectAction,
-    TransferObjectAction,
+    UpdateObject,
+    CreateObject,
+    DestroyObject,
+    TransferObject,
 ]
-
-
-class WorldEngineDecision(BaseModel):
-    """
-    The complete output format for WorldEngine's decision via tool call.
-    Separates the interaction result from world effects for clarity.
-    """
-    result: InteractionResult = Field(description="The outcome of the interaction")
-    effects: List[WorldEffect] = Field(default_factory=list, description="Optional list of world state changes")
-
 
 # =============================================================================
 # Schema Generation Utilities
@@ -180,9 +175,3 @@ def get_agent_decision_schema() -> str:
     schema_str = json.dumps(schema_dict, indent=2)
     return schema_str.replace("{", "{{").replace("}", "}}")
 
-
-def get_world_engine_decision_schema() -> str:
-    """Get a simplified JSON schema string for the WorldEngine output format."""
-    schema_dict = WorldEngineDecision.model_json_schema()
-    schema_str = json.dumps(schema_dict, indent=2)
-    return schema_str.replace("{", "{{").replace("}", "}}")

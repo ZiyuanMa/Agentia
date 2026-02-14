@@ -4,10 +4,14 @@ import logging
 from pydantic import BaseModel, Field, ValidationError
 
 from schemas import (
-    WorldEngineDecision,
     InteractionResult,
     WorldObject,
-    Location
+    Location,
+    QueryEntityParams,
+    UpdateObject,
+    CreateObject,
+    DestroyObject,
+    TransferObject
 )
 from prompts import WORLD_ENGINE_SYSTEM_PROMPT, WORLD_ENGINE_CONTEXT_TEMPLATE
 from utils import LLMClient
@@ -15,65 +19,65 @@ from utils import LLMClient
 if TYPE_CHECKING:
     from world import World
 
+# =============================================================================
+# Constants
+# =============================================================================
+
+# ReAct loop configuration
+MAX_REACT_TURNS = 15
+
+# Tool result status codes
+TOOL_STATUS_OK = "ok"
+TOOL_STATUS_STAGED = "effect_staged"
+TOOL_STATUS_RECEIVED = "received"
+
+# Special keys in tool results
+RESULT_KEY = "_result"  # Key for passing InteractionResult through tool response
+
 class WorldEngine:
     """
-    The World Engine acts as a Game Master, resolving complex interactions.
-    It uses a ReAct loop (Tool Calling) to investigate the world state before making a decision.
+    LLM-powered Game Master for resolving agent-object interactions.
+    
+    The WorldEngine orchestrates a ReAct (Reasoning + Acting) loop where an LLM:
+    1. Investigates world state using query tools
+    2. Validates and stages modifications using action tools
+    3. Produces a final narrative outcome with optional world effects
+    
+    This ensures interactions are:
+    - Contextually aware (queries before deciding)
+    - Logically consistent (validation prevents impossible actions)
+    - Rich and emergent (LLM generates creative outcomes)
+    
+    Attributes:
+        llm (LLMClient): Client for making LLM API calls
+        tools (List[Dict]): Available tools (query_entity, update_object, etc.)
+        logger (Logger): For debugging and interaction tracking
+    
+    Example:
+        >>> engine = WorldEngine(llm_client)
+        >>> result = engine.resolve_interaction(
+        ...     "Alice", coffee_cup, "drink coffee", kitchen, [], world
+        ... )
+        >>> print(result['message'])
+        'Alice takes a sip of the warm coffee, feeling energized.'
     """
     def __init__(self, llm_client: LLMClient) -> None:
         self.llm = llm_client
         self.logger = logging.getLogger("Agentia.WorldEngine")
         
         # Define the tools available to the GM
-        from schemas import (
-            InteractionResult,
-            UpdateObjectAction,
-            CreateObjectAction,
-            DestroyObjectAction,
-            TransferObjectAction
-        )
         
         self.tools = [
             {
                 "type": "function",
                 "function": {
-                    "name": "query_object",
-                    "description": "Get the full state of ANY object in the world by its ID. Use this to check remote switches, hidden items, or internal states.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "object_id": {"type": "string", "description": "The ID of the object to inspect."}
-                        },
-                        "required": ["object_id"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "check_inventory",
-                    "description": "Check what an agent is holding. Use this to verify keys, tools, or keycards.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "agent_name": {"type": "string", "description": "The name of the agent to check."}
-                        },
-                        "required": ["agent_name"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "query_location",
-                    "description": "Get details about a specific location, including who is there and what objects are visible.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "location_id": {"type": "string", "description": "The ID of the location."}
-                        },
-                        "required": ["location_id"]
-                    }
+                    "name": "query_entity",
+                    "description": """Query any entity in the world by its ID. This works for:
+- Objects: Returns full object state (id, name, state, description, mechanics, internal_state)
+- Agents: Returns agent info including current location and inventory
+
+Use this to investigate objects, check agent inventories, or inspect any entity before making decisions.""",
+                    "parameters": QueryEntityParams.model_json_schema()
                 }
             },
             # --- New Atomic Action Tools ---
@@ -90,7 +94,7 @@ class WorldEngine:
                 "function": {
                     "name": "update_object",
                     "description": "Update an object's state, description, or internal state.",
-                    "parameters": UpdateObjectAction.model_json_schema()
+                    "parameters": UpdateObject.model_json_schema()
                 }
             },
             {
@@ -98,7 +102,7 @@ class WorldEngine:
                 "function": {
                     "name": "create_object",
                     "description": "Create a new object in the world.",
-                    "parameters": CreateObjectAction.model_json_schema()
+                    "parameters": CreateObject.model_json_schema()
                 }
             },
             {
@@ -106,7 +110,7 @@ class WorldEngine:
                 "function": {
                     "name": "destroy_object",
                     "description": "Permanently remove an object from the world.",
-                    "parameters": DestroyObjectAction.model_json_schema()
+                    "parameters": DestroyObject.model_json_schema()
                 }
             },
             {
@@ -114,7 +118,7 @@ class WorldEngine:
                 "function": {
                     "name": "transfer_object",
                     "description": "Move an object between containers, locations, or agents.",
-                    "parameters": TransferObjectAction.model_json_schema()
+                    "parameters": TransferObject.model_json_schema()
                 }
             }
         ]
@@ -124,8 +128,28 @@ class WorldEngine:
                            witnesses: List[str], world: 'World',
                            inventory: List[str] = None) -> Dict[str, Any]:
         """
-        Resolve interaction using a loop of Tool Calls.
-        Ends when 'interaction_result' is called.
+        Resolve an agent's interaction with an object using LLM-powered reasoning.
+        
+        The method runs a ReAct loop where the LLM can query world state,
+        stage modifications, and finalize with a narrative result.
+        
+        Args:
+            agent_name: Name of the agent performing the action
+            target_object: The world object being interacted with
+            action_description: Natural language description (e.g., "drink coffee")
+            location: Current location context
+            witnesses: List of agent names who can observe this interaction
+            world: World instance for querying and modifying state
+            inventory: Optional list of agent's current inventory items
+        
+        Returns:
+            Dict with 'message' (str) describing the outcome. May also contain
+            'success' (bool) on errors, or be empty on deferred effects (duration > 0).
+        
+        Notes:
+            - The loop runs for a maximum of MAX_REACT_TURNS iterations
+            - Effects are staged during reasoning and applied at finalization
+            - Long-duration actions defer effect application via agent locks
         """
         # Record stats if available
         self._record_world_engine_call()
@@ -140,12 +164,12 @@ class WorldEngine:
             {"role": "user", "content": context}
         ]
         
-        # Accumulate effects to be applied (if duration > 0) or apply immediately
+        # Collect effects staged during reasoning; applied at finalization
         pending_effects = []
         final_result = None
         
-        # ReAct Loop (Max 10 turns)
-        for turn in range(10):
+        # ReAct Loop (Max turns configured by constant)
+        for turn in range(MAX_REACT_TURNS):
             response = self.llm.chat_completion(
                 messages,
                 tools=self.tools
@@ -154,63 +178,39 @@ class WorldEngine:
             if not response:
                 return {"success": False, "message": "The Game Master is silent (LLM Error)."}
             
-            msg = response
-            messages.append(msg)
+            llm_response = response
+            messages.append(llm_response)
             
-            if msg.tool_calls:
-                count = len(msg.tool_calls)
-                if msg.content:
-                    self.logger.info(f"GM Turn {turn+1} Thought: {msg.content}")
+            if llm_response.tool_calls:
+                count = len(llm_response.tool_calls)
+                if llm_response.content:
+                    self.logger.info(f"GM Turn {turn+1} Thought: {llm_response.content}")
                 self.logger.info(f"GM Turn {turn+1}: Emitting {count} tool call(s)...")
                 
-                # Flag to check if we are finishing this turn
-                finished = False
-                
-                for i, tool_call in enumerate(msg.tool_calls):
+                for i, tool_call in enumerate(llm_response.tool_calls):
                     func_name = tool_call.function.name
                     args_str = tool_call.function.arguments
                     call_id = tool_call.id
                     
-                    self.logger.info(f"  [{i+1}/{count}] {func_name}")
+                    self.logger.info(f"  [{i+1}/{count}] {func_name} | args: {args_str}")
                     
                     try:
                         args = json.loads(args_str)
-                        tool_result = {"status": "ok"} # Default response
                         
-                        # --- Inquiry Tools ---
-                        if func_name in ["query_object", "check_inventory", "query_location"]:
-                            tool_result = self._execute_inquiry_tool(func_name, args, world)
-                            
-                        # --- Action Tools ---
-                        elif func_name in ["update_object", "create_object", "destroy_object", "transfer_object"]:
-                            # Standardize mapping to internal effect format
-                            effect_type_map = {
-                                "update_object": "UpdateObject",
-                                "create_object": "CreateObject",
-                                "destroy_object": "DestroyObject",
-                                "transfer_object": "TransferObject"
-                            }
-                            internal_type = effect_type_map.get(func_name)
-                            # Remove 'action' field which is part of the schema but not needed for internal args
-                            if "action" in args:
-                                del args["action"]
-                                
-                            pending_effects.append({"type": internal_type, "args": args})
-                            tool_result = {"status": "effect_staged", "message": f"{func_name} staged."}
-                            self.logger.info(f"  -> Staged effect: {internal_type}")
-
-                        # --- Final Result Tool ---
-                        elif func_name == "interaction_result":
-                            # Validate against schema
-                            from schemas import InteractionResult
-                            decision = InteractionResult.model_validate(args)
-                            final_result = decision
-                            finished = True
-                            tool_result = {"status": "received", "message": "Interaction finalized."}
-                            self.logger.info(f"  -> Interaction Finalized: {decision.message}")
-
-                        else:
-                            tool_result = {"error": f"Unknown tool: {func_name}"}
+                        # Dispatch to appropriate handler
+                        tool_result = self._dispatch_tool(func_name, args, world, pending_effects)
+                        
+                        # Check if this was the final result
+                        if RESULT_KEY in tool_result:
+                            final_result = tool_result.pop(RESULT_KEY)
+                            # Append tool response first
+                            messages.append({
+                                "role": "tool",
+                                "tool_call_id": call_id,
+                                "content": json.dumps(tool_result)
+                            })
+                            # Then immediately return with finalization
+                            return self._finalize_interaction(final_result, pending_effects, world, agent_name)
 
                         # Append tool output
                         messages.append({
@@ -228,38 +228,155 @@ class WorldEngine:
                             "content": json.dumps({"error": error_msg})
                         })
                 
-                if finished and final_result:
-                    return self._finalize_interaction(final_result, pending_effects, world, agent_name)
-                
+                # Continue to next turn
                 continue
             
-            # No tool call
-            content = msg.content or ""
-            if not content:
-                 return {"success": False, "message": "GM Error: Empty response."}
-            
-            # If GM just talks without calling tools
-            self.logger.warning("GM output text without tool call.")
-            messages.append({"role": "user", "content": "Please call 'interaction_result' to finalize the outcome."})
+            # No tool calls - handle appropriately  
+            if not self._handle_no_tool_call(llm_response, messages):
+                return {"success": False, "message": "GM Error: Empty response."}
             continue
         
+        
         return {"success": False, "message": "The interaction took too long to resolve."}
-
-    def _execute_inquiry_tool(self, name: str, args: Dict, world: 'World') -> Dict:
-        """Execute read-only inquiry tools."""
-        if name == "query_object":
-            obj = world.get_object(args.get("object_id"))
-            return obj.model_dump() if obj else {"error": "Object not found"}
+    
+    def _handle_no_tool_call(self, llm_response: Any, messages: List[Dict]) -> bool:
+        """
+        Handle when LLM responds without calling tools.
         
-        elif name == "check_inventory":
-            items = world.get_agent_inventory(args.get("agent_name"))
-            return {"inventory": items}
+        Args:
+            llm_response: The LLM's response object (ChatCompletion)
+            messages: Conversation history to append prompt to
+        
+        Returns:
+            False if response is invalid (empty), True if handled successfully
+        """
+        content = llm_response.content or ""
+        if not content:
+            return False  # Signal invalid response
+        
+        # LLM wrote text but didn't call tools - remind it
+        self.logger.warning("GM output text without tool call.")
+        messages.append({
+            "role": "user", 
+            "content": "Please call 'interaction_result' to finalize the outcome."
+        })
+        return True
+    
+    # =========================================================================
+    # Tool Dispatch and Handling
+    # =========================================================================
+    
+    def _dispatch_tool(self, func_name: str, args: Dict, world: 'World', 
+                       pending_effects: List[Dict]) -> Dict:
+        """
+        Dispatch tool call to appropriate handler.
+        Returns tool result dict to send back to LLM.
+        """
+        # --- Query Tools ---
+        if func_name == "query_entity":
+            return self._execute_query_entity(args.get("entity_id"), world)
+        
+        # --- Action Tools (validate + stage) ---
+        action_tools = {
+            "update_object": (self._validate_update_object, "UpdateObject"),
+            "create_object": (self._validate_create_object, "CreateObject"),
+            "destroy_object": (self._validate_destroy_object, "DestroyObject"),
+            "transfer_object": (self._validate_transfer_object, "TransferObject"),
+        }
+        
+        if func_name in action_tools:
+            validator, effect_type = action_tools[func_name]
+            error = validator(args, world)
+            if error:
+                return error
             
-        elif name == "query_location":
-            loc = world.get_location(args.get("location_id"))
-            return loc.model_dump() if loc else {"error": "Location not found"}
+            pending_effects.append({"type": effect_type, "args": args})
+            self.logger.info(f"  -> Staged effect: {effect_type}")
+            return {"status": TOOL_STATUS_STAGED, "message": f"{func_name} staged."}
         
-        return {"error": "Unknown inquiry tool"}
+        # --- Final Result Tool ---
+        if func_name == "interaction_result":
+            decision = InteractionResult.model_validate(args)
+            self.logger.info(f"  -> Interaction Finalized: {decision.message}")
+            return {"status": TOOL_STATUS_RECEIVED, "message": "Interaction finalized.", RESULT_KEY: decision}
+        
+        # --- Unknown Tool ---
+        return {"error": f"Unknown tool: {func_name}"}
+    
+    # =========================================================================
+    # Validation Helper Methods
+    # =========================================================================
+    
+    def _validate_update_object(self, args: Dict, world: 'World') -> Optional[Dict]:
+        """Validate update_object arguments. Returns error dict if invalid, None if valid."""
+        object_id = args.get("object_id")
+        obj = world.get_object(object_id)
+        if not obj:
+            return {"error": f"Cannot update: object '{object_id}' does not exist"}
+        return None
+    
+    def _validate_create_object(self, args: Dict, world: 'World') -> Optional[Dict]:
+        """Validate create_object arguments. Returns error dict if invalid, None if valid."""
+        object_id = args.get("object_id")
+        location_id = args.get("location_id")
+        
+        if object_id in world.objects:
+            return {"error": f"Cannot create: object '{object_id}' already exists"}
+        elif location_id and location_id not in world.locations:
+            return {"error": f"Cannot create: location '{location_id}' does not exist"}
+        return None
+    
+    def _validate_destroy_object(self, args: Dict, world: 'World') -> Optional[Dict]:
+        """Validate destroy_object arguments. Returns error dict if invalid, None if valid."""
+        object_id = args.get("object_id")
+        obj = world.get_object(object_id)
+        if not obj:
+            return {"error": f"Cannot destroy: object '{object_id}' does not exist"}
+        return None
+    
+    def _validate_transfer_object(self, args: Dict, world: 'World') -> Optional[Dict]:
+        """Validate transfer_object arguments. Returns error dict if invalid, None if valid."""
+        object_id = args.get("object_id")
+        to_id = args.get("to_id")
+        
+        obj = world.get_object(object_id)
+        if not obj:
+            return {"error": f"Cannot transfer: object '{object_id}' does not exist"}
+        elif to_id not in world.locations and to_id not in world.agent_locations and to_id not in world.objects:
+            return {"error": f"Cannot transfer: destination '{to_id}' does not exist"}
+        return None
+    
+    # =========================================================================
+    # Tool Execution Methods
+    # =========================================================================
+
+    def _execute_query_entity(self, entity_id: str, world: 'World') -> Dict:
+        """
+        Unified query tool that checks objects and agents.
+        Returns the first match found.
+        """
+        # Try as object
+        obj = world.get_object(entity_id)
+        if obj:
+            return {
+                "type": "object",
+                "data": obj.model_dump()
+            }
+        
+        # Try as agent (check if agent exists in world.agent_locations)
+        if entity_id in world.agent_locations:
+            location_id = world.get_agent_location(entity_id)
+            inventory = world.get_agent_inventory(entity_id)
+            return {
+                "type": "agent",
+                "data": {
+                    "name": entity_id,
+                    "location_id": location_id,
+                    "inventory": inventory
+                }
+            }
+        
+        return {"error": f"Entity '{entity_id}' not found"}
 
     def _finalize_interaction(self, result_model: Any, 
                               pending_effects: List[Dict], 

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from pydantic import ValidationError
 from world_engine import WorldEngine
 from world import World
-from schemas import WorldObject, Location, UpdateObjectAction, CreateObjectAction, TransferObjectAction
+from schemas import WorldObject, Location, UpdateObject, CreateObject, TransferObject
 from utils import LLMClient
 
 
@@ -279,9 +279,9 @@ class TestToolValidation:
     """Test Pydantic validation for tool arguments."""
     
     def test_invalid_update_object(self):
-        """Test validation error for invalid UpdateObjectAction args."""
+        """Test validation error for invalid UpdateObject args."""
         with pytest.raises(ValidationError):
-            UpdateObjectAction()  # Missing required object_id
+            UpdateObject()  # Missing required object_id
     
     def test_valid_create_object(self):
         """Test valid CreateObjectAction parsing."""

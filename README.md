@@ -19,17 +19,17 @@ Agentia solves the "rigid action" and "limited interaction" problems of traditio
 
 ### SimAgent (The Residents)
 These are the autonomous entities living in the world. Their reasoning focuses on "What should I do to achieve my goal?"
-*   `MoveAction`: Travel to a **connected** location (locations must be directly linked; you cannot teleport to unconnected areas).
-*   `TalkAction`: Speak to others in the same location (broadcasts message to local agents).
-*   `InteractAction`: Attempt to use/manipulate an object (e.g., "Use Coffee Machine", "Unlock Door").
-*   `WaitAction`: Idling or observing.
+*   `Move`: Travel to a **connected** location (locations must be directly linked; you cannot teleport to unconnected areas).
+*   `Talk`: Speak to others in the same location (broadcasts message to local agents).
+*   `Interact`: Attempt to use/manipulate an object (e.g., "Use Coffee Machine", "Unlock Door").
+*   `Wait`: Idling or observing.
 
 ### WorldEngine (The Environment)
 This is the "Game Master" agent that resolves complex physics and causality when a SimAgent interacts with an object.
-*   `UpdateObjectAction`: Change an object's state (e.g., "Coffee Machine" -> "Broken").
-*   `CreateObjectAction`: Spawn new items (e.g., "Cup of Coffee").
-*   `DestroyObjectAction`: Remove items (e.g., "Cup of Coffee" consumed).
-*   `TransferObjectAction`: Move items between inventories or locations (e.g., Giving a key card).
+*   `UpdateObject`: Change an object's state (e.g., "Coffee Machine" -> "Broken").
+*   `CreateObject`: Spawn new items (e.g., "Cup of Coffee").
+*   `DestroyObject`: Remove items (e.g., "Cup of Coffee" consumed).
+*   `TransferObject`: Move items between inventories or locations (e.g., Giving a key card).
 
 Additionally, interactions can have **duration** (e.g., repairing takes 30 minutes), during which the agent is locked and cannot perform other actions.
 
