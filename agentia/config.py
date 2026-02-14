@@ -29,3 +29,5 @@ DEFAULT_AGENT_STATUS = {"fatigue": "low", "stress": "low"}
 # =============================================================================
 
 DEFAULT_SCENARIO_PATH = "data/scenario_office_escape.json"
+
+MAX_HISTORY_LENGTH = 10

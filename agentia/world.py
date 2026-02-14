@@ -4,10 +4,10 @@ import networkx as nx
 import logging
 import json
 
-from config import TICK_DURATION_MINUTES, SIMULATION_START_TIME
-from schemas import WorldObject, Location
-from utils import LLMClient
-from world_engine import WorldEngine
+from .config import TICK_DURATION_MINUTES, SIMULATION_START_TIME
+from .schemas import WorldObject, Location
+from .utils import LLMClient
+from .world_engine import WorldEngine
 
 
 class World:

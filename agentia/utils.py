@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, List, Optional
 from openai import OpenAI, AsyncOpenAI
-from config import OPENAI_API_KEY, MODEL_NAME, OPENAI_BASE_URL
+from .config import OPENAI_API_KEY, MODEL_NAME, OPENAI_BASE_URL
 
 logger = logging.getLogger("Agentia.Utils")
 
@@ -9,7 +9,7 @@ logger = logging.getLogger("Agentia.Utils")
 def _record_api_call() -> None:
     """Record an API call to stats if available."""
     try:
-        from logger_config import get_stats
+        from .logger_config import get_stats
         stats = get_stats()
         if stats:
             stats.record_api_call()
@@ -20,7 +20,7 @@ def _record_api_call() -> None:
 def _record_error() -> None:
     """Record an error to stats if available."""
     try:
-        from logger_config import get_stats
+        from .logger_config import get_stats
         stats = get_stats()
         if stats:
             stats.record_error()

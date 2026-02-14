@@ -2,21 +2,15 @@ from typing import List, Dict, Any, Optional, TYPE_CHECKING
 import json
 import logging
 
-from schemas import (
-    InteractionResult,
-    WorldObject,
-    Location,
-    QueryEntityParams,
-    UpdateObject,
-    CreateObject,
-    DestroyObject,
-    TransferObject
+from .schemas import (
+    WorldObject, Location, InteractionResult,
+    QueryEntityParams, UpdateObject, CreateObject, DestroyObject, TransferObject
 )
-from prompts import WORLD_ENGINE_SYSTEM_PROMPT, WORLD_ENGINE_CONTEXT_TEMPLATE
-from utils import LLMClient
+from .prompts import WORLD_ENGINE_SYSTEM_PROMPT, WORLD_ENGINE_CONTEXT_TEMPLATE
+from .utils import LLMClient
 
 if TYPE_CHECKING:
-    from world import World
+    from .world import World
 
 # =============================================================================
 # Constants
@@ -425,7 +419,7 @@ Use this to investigate objects, check agent inventories, or inspect any entity 
 
     def _record_world_engine_call(self) -> None:
         try:
-            from logger_config import get_stats
+            from .logger_config import get_stats
             stats = get_stats()
             if stats:
                 stats.record_world_engine_call()

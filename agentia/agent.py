@@ -2,10 +2,10 @@ from typing import List, Dict, Any
 from pydantic import BaseModel, Field, ValidationError
 import logging
 import json
-from utils import LLMClient
-from config import TICK_DURATION_MINUTES, DEFAULT_AGENT_STATUS
-from schemas import AgentDecision
-from prompts import AGENT_SYSTEM_PROMPT, AGENT_USER_TEMPLATE
+from .schemas import AgentDecision
+from .prompts import AGENT_SYSTEM_PROMPT, AGENT_USER_TEMPLATE
+from .utils import LLMClient
+from .config import MAX_HISTORY_LENGTH, DEFAULT_AGENT_STATUS, TICK_DURATION_MINUTES
 
 
 class AgentMemory(BaseModel):

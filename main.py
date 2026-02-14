@@ -1,12 +1,12 @@
 import logging
 import asyncio
 import argparse
-from world import World
-from agent import SimAgent
-from utils import LLMClient
 import json
-from logger_config import setup_logging, get_stats
-from config import DEFAULT_SCENARIO_PATH
+from agentia.world import World
+from agentia.agent import SimAgent
+from agentia.utils import LLMClient
+from agentia.logger_config import setup_logging, get_stats
+from agentia.config import DEFAULT_SCENARIO_PATH
 
 # Configure Logging
 setup_logging()

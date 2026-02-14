@@ -2,7 +2,7 @@
 # Prompts for Simworld LLM Agents
 # =============================================================================
 
-from schemas import get_agent_decision_schema
+from .schemas import get_agent_decision_schema
 
 # Generate schemas at module load time
 _DECISION_SCHEMA = get_agent_decision_schema()
