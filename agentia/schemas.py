@@ -37,6 +37,30 @@ class Location(BaseModel):
     agents_present: List[str] = Field(default_factory=list)  # List of agent names
 
 
+class Task(BaseModel):
+    """A task in the agent's daily plan."""
+    id: str = Field(description="Unique ID for the task (e.g., '1', 'task_a')")
+    description: str = Field(description="Description of the task")
+    status: Literal["pending", "in_progress", "completed", "failed"] = Field(default="pending")
+
+
+class Plan(BaseModel):
+    """Internal model for the plan tool structure (used for schema generation)."""
+    tasks: List[Task] = Field(description="The full list of tasks for your plan.")
+
+
+class Task(BaseModel):
+    """A task in the agent's daily plan."""
+    id: str = Field(description="Unique ID for the task (e.g., '1', 'task_a')")
+    description: str = Field(description="Description of the task")
+    status: Literal["pending", "in_progress", "completed", "failed"] = Field(default="pending")
+
+
+class Plan(BaseModel):
+    """Internal model for the plan tool structure (used for schema generation)."""
+    tasks: List[Task] = Field(description="The full list of tasks for your plan.")
+
+
 # =============================================================================
 # SimAgent Action Models
 # =============================================================================
@@ -174,4 +198,16 @@ def get_agent_decision_schema() -> str:
     schema_dict = AgentDecision.model_json_schema()
     schema_str = json.dumps(schema_dict, indent=2)
     return schema_str.replace("{", "{{").replace("}", "}}")
+
+
+def get_update_plan_tool_schema() -> dict:
+    """Get the tool definition for updating the daily plan."""
+    return {
+        "type": "function",
+        "function": {
+            "name": "update_plan",
+            "description": "Create or update your daily plan. Use this to set your schedule, mark tasks as complete, or replan when circumstances change.",
+            "parameters": Plan.model_json_schema()
+        }
+    }
 

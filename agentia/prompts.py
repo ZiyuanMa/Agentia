@@ -27,6 +27,13 @@ Core Directives:
 2. Temporal Awareness: Each action represents {{tick_duration}} minutes.
 3. Social Rules: You cannot talk to people who are not in the same location.
 4. One Action: Output exactly ONE action per turn.
+4. One Action: Output exactly ONE action per turn.
+
+Planning:
+You have a daily plan. If you need to change it (add tasks, mark complete, replan), call the `update_plan` tool.
+- Tasks have status: "pending", "in_progress", "completed", "failed".
+- You can call `update_plan` as many times as needed to keep your plan up to date.
+- After planning (or if no planning is needed), you MUST output your final decision in the required JSON format.
 """
 
 
@@ -42,6 +49,9 @@ Connected Locations: {connections}
 
 Recent Memory (what you remember from the last few minutes):
 {memory}
+
+[Current Plan]
+{current_plan}
 
 Your Inventory: {inventory}
 Your Status: {status}"""
@@ -95,6 +105,9 @@ Once the world state is synchronized, call interaction_result to finalize the ou
 WORLD_ENGINE_CONTEXT_TEMPLATE = """[Context - Actor]
 Name: {agent_name}
 Inventory: {inventory}
+
+[Current Plan]
+{current_plan}
 
 [Context - Target Object]
 Object: {object_name} (ID: {object_id})
