@@ -89,7 +89,7 @@ Once the world state is synchronized, call interaction_result to finalize the ou
 ## Rules
 - Provide the direct interaction result in interaction_result.message. Do not provide any analysis, explanation, or information not directly related to the action in the message.
 - World State can only be modified based on the action results.
-- "create_object" can only be used to create objects that are descried in the context.
+- create_object can never be used to create objects that are not mentioned in the context. If you really to need to create an object, make sure it does not contain any new information that does not mentioned in the context.
 """
 
 WORLD_ENGINE_CONTEXT_TEMPLATE = """[Context - Actor]

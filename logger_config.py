@@ -7,7 +7,7 @@ import sys
 import os
 import json
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict
 from collections import defaultdict
 
 

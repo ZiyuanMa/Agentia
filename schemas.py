@@ -8,7 +8,7 @@ All Pydantic models for the simulation are centralized here:
 - Decision models (AgentDecision, WorldEngineDecision)
 """
 import json
-from typing import List, Optional, Literal, Union, Any
+from typing import List, Optional, Literal, Union
 from pydantic import BaseModel, Field
 
 

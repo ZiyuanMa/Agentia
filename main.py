@@ -6,7 +6,7 @@ from agent import SimAgent
 from utils import LLMClient
 import json
 from logger_config import setup_logging, get_stats
-from config import TICK_DURATION_MINUTES, DEFAULT_SCENARIO_PATH
+from config import DEFAULT_SCENARIO_PATH
 
 # Configure Logging
 setup_logging()

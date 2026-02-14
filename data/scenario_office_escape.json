@@ -209,9 +209,9 @@
                 "id": "desk_charlie",
                 "name": "Charlie's Desk",
                 "location_id": "office_main",
-                "state": "messy",
-                "description": "A desk with a nameplate 'Charlie'. It is labeled as Desk #3.",
-                "mechanics": "Observation: Desk number is 3.",
+                "state": "normal",
+                "description": "A desk with a nameplate 'Charlie'.",
+                "mechanics": "Searchable. return 'Desk number is 3' if agent search it.",
                 "internal_state": {
                     "number": 3
                 }

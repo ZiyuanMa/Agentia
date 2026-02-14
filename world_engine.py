@@ -1,7 +1,6 @@
 from typing import List, Dict, Any, Optional, TYPE_CHECKING
 import json
 import logging
-from pydantic import BaseModel, Field, ValidationError
 
 from schemas import (
     InteractionResult,
