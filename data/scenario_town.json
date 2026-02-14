@@ -1,0 +1,279 @@
+{
+    "name": "Small Town Expanded",
+    "description": "A detailed small town environment with residential, commercial, and recreational areas.",
+    "world": {
+        "locations": [
+            {
+                "id": "main_street",
+                "name": "Main Street",
+                "description": "The central thoroughfare of the town, connecting all major districts.",
+                "connected_to": [
+                    "residential_street",
+                    "commercial_district",
+                    "park",
+                    "supermarket",
+                    "cafe"
+                ],
+                "objects": [
+                    "town_square_statue",
+                    "notice_board"
+                ]
+            },
+            {
+                "id": "residential_street",
+                "name": "Residential Street",
+                "description": "A quiet tree-lined street with houses.",
+                "connected_to": [
+                    "main_street",
+                    "apt_alice",
+                    "house_bob",
+                    "apt_charlie"
+                ],
+                "objects": [
+                    "street_lamp_01",
+                    "mailbox_community"
+                ]
+            },
+            {
+                "id": "commercial_district",
+                "name": "Commercial District",
+                "description": "The business hub of the town.",
+                "connected_to": [
+                    "main_street",
+                    "office",
+                    "gym",
+                    "library",
+                    "bar",
+                    "hospital"
+                ],
+                "objects": [
+                    "bus_stop"
+                ]
+            },
+            {
+                "id": "apt_alice",
+                "name": "Alice's Apartment",
+                "description": "A neat, organized apartment.",
+                "connected_to": [
+                    "residential_street"
+                ],
+                "objects": [
+                    "bed_alice",
+                    "wardrobe_alice",
+                    "desk_home_alice"
+                ]
+            },
+            {
+                "id": "house_bob",
+                "name": "Bob's House",
+                "description": "A comfortable family home.",
+                "connected_to": [
+                    "residential_street"
+                ],
+                "objects": [
+                    "bed_bob",
+                    "wardrobe_bob",
+                    "tv_bob"
+                ]
+            },
+            {
+                "id": "apt_charlie",
+                "name": "Charlie's Studio",
+                "description": "A messy studio apartment filled with musical instruments.",
+                "connected_to": [
+                    "residential_street"
+                ],
+                "objects": [
+                    "bed_charlie",
+                    "guitar_stand",
+                    "recording_desk"
+                ]
+            },
+            {
+                "id": "office",
+                "name": "Town Office",
+                "description": "Where the town's administrative work happens.",
+                "connected_to": [
+                    "commercial_district"
+                ],
+                "objects": [
+                    "desk_work_alice",
+                    "printer",
+                    "water_cooler"
+                ]
+            },
+            {
+                "id": "gym",
+                "name": "Iron Muscle Gym",
+                "description": "A local gym with weights and cardio machines.",
+                "connected_to": [
+                    "commercial_district"
+                ],
+                "objects": [
+                    "treadmill_01",
+                    "dumbbell_rack",
+                    "yoga_mats"
+                ]
+            },
+            {
+                "id": "library",
+                "name": "Public Library",
+                "description": "A quiet place for reading and study.",
+                "connected_to": [
+                    "commercial_district"
+                ],
+                "objects": [
+                    "bookshelf_fiction",
+                    "bookshelf_science",
+                    "reading_table"
+                ]
+            },
+            {
+                "id": "bar",
+                "name": "The Rusty Anchor",
+                "description": "A cozy pub with a friendly atmosphere.",
+                "connected_to": [
+                    "commercial_district"
+                ],
+                "objects": [
+                    "bar_counter",
+                    "jukebox",
+                    "dart_board"
+                ]
+            },
+            {
+                "id": "hospital",
+                "name": "Town Clinic",
+                "description": "Small medical clinic for the town residents.",
+                "connected_to": [
+                    "commercial_district"
+                ],
+                "objects": [
+                    "reception_desk",
+                    "waiting_chairs"
+                ]
+            },
+            {
+                "id": "cafe",
+                "name": "The Daily Grind",
+                "description": "A popular cafe serving coffee and pastries.",
+                "connected_to": [
+                    "main_street"
+                ],
+                "objects": [
+                    "coffee_machine_cafe",
+                    "pastry_display",
+                    "cafe_table_01"
+                ]
+            },
+            {
+                "id": "supermarket",
+                "name": "Fresh Mart",
+                "description": "Local grocery store.",
+                "connected_to": [
+                    "main_street"
+                ],
+                "objects": [
+                    "shelf_produce",
+                    "shelf_dairy",
+                    "checkout_counter"
+                ]
+            },
+            {
+                "id": "park",
+                "name": "Central Park",
+                "description": "A large green space with a fountain.",
+                "connected_to": [
+                    "main_street"
+                ],
+                "objects": [
+                    "park_bench_01",
+                    "park_bench_02",
+                    "fountain"
+                ]
+            }
+        ],
+        "objects": [
+            {
+                "id": "bed_alice",
+                "name": "Alice's Bed",
+                "location_id": "apt_alice",
+                "description": "A comfortable queen-sized bed.",
+                "state": "made",
+                "mechanics": "Sleeping restores energy.",
+                "internal_state": {}
+            },
+            {
+                "id": "desk_work_alice",
+                "name": "Work Desk",
+                "location_id": "office",
+                "description": "Alice's work desk.",
+                "state": "tidy",
+                "mechanics": "Used for work tasks.",
+                "internal_state": {
+                    "computer_on": false
+                }
+            },
+            {
+                "id": "treadmill_01",
+                "name": "Treadmill",
+                "location_id": "gym",
+                "description": "A standard treadmill.",
+                "state": "idle",
+                "mechanics": "Running improves fitness and reduces stress.",
+                "internal_state": {
+                    "speed": 0
+                }
+            },
+            {
+                "id": "bookshelf_fiction",
+                "name": "Fiction Section",
+                "location_id": "library",
+                "description": "Shelves filled with novels.",
+                "state": "organized",
+                "mechanics": "Reading improves knowledge and reduces stress.",
+                "internal_state": {}
+            },
+            {
+                "id": "jukebox",
+                "name": "Jukebox",
+                "location_id": "bar",
+                "description": "An old-school jukebox playing classic rock.",
+                "state": "playing",
+                "mechanics": "Listening to music improves mood.",
+                "internal_state": {
+                    "current_song": "Bohemian Rhapsody"
+                }
+            }
+        ]
+    },
+    "agents": [
+        {
+            "name": "Alice",
+            "age": 28,
+            "occupation": "Office Worker",
+            "personality": "Diligent, health-conscious, but stressed.",
+            "background": "Trying to get a promotion while maintaining a workout routine.",
+            "initial_location": "apt_alice",
+            "initial_goal": "Go to the gym for a morning workout before heading to the office."
+        },
+        {
+            "name": "Bob",
+            "age": 45,
+            "occupation": "Shop Owner",
+            "personality": "Friendly, community-focused.",
+            "background": "Owns Fresh Mart. Organizing a community event.",
+            "initial_location": "house_bob",
+            "initial_goal": "Head to Fresh Mart to open up for the day."
+        },
+        {
+            "name": "Charlie",
+            "age": 22,
+            "occupation": "Musician",
+            "personality": "Artistic, night owl.",
+            "background": "Working on a new album. Needs inspiration.",
+            "initial_location": "apt_charlie",
+            "initial_goal": "Go to the park to find inspiration for lyrics."
+        }
+    ]
+}
